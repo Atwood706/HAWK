@@ -1,0 +1,99 @@
+Metadata-Version: 2.4
+Name: awdl
+Version: 0.1.0
+Summary: Agentic Workflow Description Language - A domain-specific language for defining agent workflows
+Author: HAWK Team
+License: MIT
+Project-URL: Homepage, https://github.com/hawk-team/awdl
+Project-URL: Repository, https://github.com/hawk-team/awdl
+Keywords: agent,workflow,dsl,langgraph,ai
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+Requires-Dist: click>=8.0.0
+Requires-Dist: langgraph>=0.0.20
+Requires-Dist: langchain>=0.1.0
+Requires-Dist: langchain-openai>=0.0.5
+Provides-Extra: dev
+Requires-Dist: pytest>=7.0.0; extra == "dev"
+Requires-Dist: pytest-cov>=4.0.0; extra == "dev"
+Requires-Dist: black>=23.0.0; extra == "dev"
+Requires-Dist: ruff>=0.1.0; extra == "dev"
+Requires-Dist: mypy>=1.0.0; extra == "dev"
+
+# AWDL - Agentic Workflow Description Language
+
+AWDL is a domain-specific language for defining agent workflows in a simple, declarative manner. It allows users to describe complex agent workflows without dealing with the underlying framework implementation details.
+
+## Features
+
+- **Simple Syntax**: Define workflows using a clean, readable syntax
+- **Framework Agnostic IR**: The intermediate representation is independent of any specific agent framework
+- **Variable-Driven Dependencies**: Execution order is automatically derived from variable dependencies
+- **Multiple Compilation Targets**: Currently supports LangGraph, with more frameworks planned
+
+## Installation
+
+```bash
+pip install -e .
+```
+
+## Quick Start
+
+Create a workflow file `example.awdl`:
+
+```awdl
+import hawk.agents.llm
+import hawk.tools.web_search
+
+__start__
+
+string user_query: "What is the weather today?"
+string search_results
+string final_answer
+
+web_search: {
+    query: user_query,
+    results: search_results
+}
+
+llm_agent: {
+    context: search_results,
+    prompt: user_query,
+    response: final_answer
+}
+
+__end__
+```
+
+Compile and run:
+
+```bash
+# Validate the workflow
+awdl validate example.awdl
+
+# Compile to LangGraph
+awdl compile example.awdl --target langgraph -o workflow.py
+
+# Run directly
+awdl run example.awdl --input '{"user_query": "Hello"}'
+```
+
+## Architecture
+
+AWDL uses a three-layer architecture:
+
+1. **Layer 1 - Parser**: Tokenizes and parses `.awdl` files into an intermediate representation
+2. **Layer 2 - IR**: Framework-agnostic representation of workflows with Agent, Tool, and Condition elements
+3. **Layer 3 - Compiler**: Transforms IR into executable code for target frameworks (e.g., LangGraph)
+
+## License
+
+MIT License
+

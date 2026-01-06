@@ -1,0 +1,2 @@
+[console_scripts]
+awdl = awdl.cli:main

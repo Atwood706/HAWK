@@ -1,0 +1,37 @@
+import hawk.agents.llm
+import hawk.tools.web_search
+
+__start__
+
+# Variable declarations
+string user_query: "What is the weather today?"
+string search_results
+string final_answer
+
+# Element invocations with I/O bindings
+# Execution order is derived from variable dependencies:
+#   web_search writes search_results
+#   llm_agent reads search_results -> so llm_agent runs AFTER web_search
+
+web_search: {
+    query: user_query,
+    results: search_results
+}
+
+llm_agent: {
+    context: search_results,
+    prompt: user_query,
+    response: final_answer
+}
+
+# Condition element - checks variable value
+if final_answer == "":
+{
+    fallback_agent: {
+        input: user_query,
+        output: final_answer
+    }
+}
+
+__end__
+
