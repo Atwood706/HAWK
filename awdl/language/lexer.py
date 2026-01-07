@@ -7,7 +7,7 @@ It provides better error messages and control compared to generated lexers.
 
 from typing import Iterator, Optional
 
-from awdl.language.tokens import Token, TokenType, KEYWORDS, SourceLocation
+from awdl.language.tokens import Token, TokenType, KEYWORDS, SourceLocation, SINGLE_CHAR_TOKENS, TWO_CHAR_TOKENS
 from awdl.language.errors import AWDLSyntaxError
 
 
@@ -244,46 +244,16 @@ class Lexer:
         char = self.current_char
         start_column = self.column
         
-        # Two-character operators
-        if char == '=' and self.peek() == '=':
+        # Two-character operators (check first to avoid partial match)
+        two_char = char + (self.peek() or '')
+        if two_char in TWO_CHAR_TOKENS:
             self.advance()
             self.advance()
-            return Token(TokenType.EQ, '==', self.line, start_column)
-        
-        if char == '!' and self.peek() == '=':
-            self.advance()
-            self.advance()
-            return Token(TokenType.NE, '!=', self.line, start_column)
-        
-        if char == '<' and self.peek() == '=':
-            self.advance()
-            self.advance()
-            return Token(TokenType.LE, '<=', self.line, start_column)
-        
-        if char == '>' and self.peek() == '=':
-            self.advance()
-            self.advance()
-            return Token(TokenType.GE, '>=', self.line, start_column)
+            return Token(TWO_CHAR_TOKENS[two_char], two_char, self.line, start_column)
         
         # Single-character operators and delimiters
-        single_char_tokens = {
-            ':': TokenType.COLON,
-            ',': TokenType.COMMA,
-            ';': TokenType.SEMICOLON,
-            '.': TokenType.DOT,
-            '{': TokenType.LBRACE,
-            '}': TokenType.RBRACE,
-            '(': TokenType.LPAREN,
-            ')': TokenType.RPAREN,
-            '[': TokenType.LBRACKET,
-            ']': TokenType.RBRACKET,
-            '<': TokenType.LT,
-            '>': TokenType.GT,
-            '=': TokenType.ASSIGN,
-        }
-        
-        if char in single_char_tokens:
-            token = Token(single_char_tokens[char], char, self.line, start_column)
+        if char in SINGLE_CHAR_TOKENS:
+            token = Token(SINGLE_CHAR_TOKENS[char], char, self.line, start_column)
             self.advance()
             return token
         

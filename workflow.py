@@ -43,24 +43,24 @@ def web_search_1_node(state: WorkflowState) -> dict:
     }
 
 def llm_agent_2_node(state: WorkflowState) -> dict:
-            """
-            Agent node: llm_agent
-            ID: llm_agent_2
-            """
-            # Extract inputs from state
-            context = state["search_results"]
-            prompt = state["user_query"]
+    """
+    Agent node: llm_agent
+    ID: llm_agent_2
+    """
+    # Extract inputs from state
+    context = state["search_results"]
+    prompt = state["user_query"]
 
-            # TODO: Implement actual agent call
-            # For now, return a placeholder
-            result = {
-                "response": f"[llm_agent] Processed input",
-            }
+    # TODO: Implement actual agent call
+    # For now, return a placeholder
+    result = {
+        "response": f"[llm_agent] Processed input",
+    }
 
-            # Return outputs to update state
-            return {
-                "final_answer": result.get("response", ""),
-            }
+    # Return outputs to update state
+    return {
+        "final_answer": result.get("response", ""),
+    }
 
 def fallback_agent_3_node(state: WorkflowState) -> dict:
     """
@@ -110,7 +110,7 @@ workflow.set_entry_point("web_search_1")
 app = workflow.compile()
 
 
-            # Initial state
+# Initial state
 initial_state = {
     "user_query": 'What is the weather today?',
     "search_results": "",

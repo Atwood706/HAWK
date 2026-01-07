@@ -105,6 +105,31 @@ TYPE_KEYWORDS: set[TokenType] = {
     TokenType.TYPE_IMAGE,
 }
 
+# Single-character operators and delimiters
+SINGLE_CHAR_TOKENS: dict[str, TokenType] = {
+    ':': TokenType.COLON,
+    ',': TokenType.COMMA,
+    ';': TokenType.SEMICOLON,
+    '.': TokenType.DOT,
+    '{': TokenType.LBRACE,
+    '}': TokenType.RBRACE,
+    '(': TokenType.LPAREN,
+    ')': TokenType.RPAREN,
+    '[': TokenType.LBRACKET,
+    ']': TokenType.RBRACKET,
+    '<': TokenType.LT,
+    '>': TokenType.GT,
+    '=': TokenType.ASSIGN,
+}
+
+# Two-character operators
+TWO_CHAR_TOKENS: dict[str, TokenType] = {
+    '==': TokenType.EQ,
+    '!=': TokenType.NE,
+    '<=': TokenType.LE,
+    '>=': TokenType.GE,
+}
+
 
 @dataclass
 class Token:

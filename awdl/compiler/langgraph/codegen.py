@@ -139,83 +139,87 @@ class LangGraphCompiler(BaseCompiler):
         """Generate a node function for an agent."""
         func_name = f"{agent.element_id}_node"
         
+        lines = [
+            f"def {func_name}(state: WorkflowState) -> dict:",
+            f'    """',
+            f"    Agent node: {agent.agent_type}",
+            f"    ID: {agent.element_id}",
+            f'    """',
+            f"    # Extract inputs from state",
+        ]
+        
         # Build input extraction
-        input_lines = []
-        for port_name, var_name in agent.inputs.items():
-            input_lines.append(f'    {port_name} = state["{var_name}"]')
+        if agent.inputs:
+            for port_name, var_name in agent.inputs.items():
+                lines.append(f'    {port_name} = state["{var_name}"]')
+        else:
+            lines.append("    pass  # No inputs")
+        
+        lines.extend([
+            f"",
+            f"    # TODO: Implement actual agent call",
+            f"    # For now, return a placeholder",
+            f"    result = {{",
+            f'        "response": f"[{agent.agent_type}] Processed input",',
+            f"    }}",
+            f"",
+            f"    # Return outputs to update state",
+            f"    return {{",
+        ])
         
         # Build output assignment
-        output_lines = []
-        for port_name, var_name in agent.outputs.items():
-            output_lines.append(f'        "{var_name}": result.get("{port_name}", ""),')
+        if agent.outputs:
+            for port_name, var_name in agent.outputs.items():
+                lines.append(f'        "{var_name}": result.get("{port_name}", ""),')
+        else:
+            lines.append("        # No outputs")
         
-        inputs_code = "\n".join(input_lines) if input_lines else "    pass  # No inputs"
-        outputs_code = "\n".join(output_lines) if output_lines else '        # No outputs'
+        lines.append("    }")
         
-        # Build the function
-        code = dedent(f'''\
-            def {func_name}(state: WorkflowState) -> dict:
-                """
-                Agent node: {agent.agent_type}
-                ID: {agent.element_id}
-                """
-                # Extract inputs from state
-            {inputs_code}
-                
-                # TODO: Implement actual agent call
-                # For now, return a placeholder
-                result = {{
-                    "response": f"[{agent.agent_type}] Processed input",
-                }}
-                
-                # Return outputs to update state
-                return {{
-            {outputs_code}
-                }}
-        ''')
-        
-        return code.strip()
+        return "\n".join(lines)
     
     def _generate_tool_function(self, tool: Tool) -> str:
         """Generate a node function for a tool."""
         func_name = f"{tool.element_id}_node"
         
+        lines = [
+            f"def {func_name}(state: WorkflowState) -> dict:",
+            f'    """',
+            f"    Tool node: {tool.tool_type}",
+            f"    ID: {tool.element_id}",
+            f'    """',
+            f"    # Extract inputs from state",
+        ]
+        
         # Build input extraction
-        input_lines = []
-        for port_name, var_name in tool.inputs.items():
-            input_lines.append(f'    {port_name} = state["{var_name}"]')
+        if tool.inputs:
+            for port_name, var_name in tool.inputs.items():
+                lines.append(f'    {port_name} = state["{var_name}"]')
+        else:
+            lines.append("    pass  # No inputs")
+        
+        lines.extend([
+            f"",
+            f"    # TODO: Implement actual tool call",
+            f"    # For now, return a placeholder",
+            f"    result = {{",
+            f'        "results": f"[{tool.tool_type}] Executed",',
+            f"    }}",
+            f"",
+            f"    # Return outputs to update state",
+            f"    return {{",
+        ])
         
         # Build output assignment
-        output_lines = []
-        for port_name, var_name in tool.outputs.items():
-            output_lines.append(f'        "{var_name}": result.get("{port_name}", ""),')
+        if tool.outputs:
+            for port_name, var_name in tool.outputs.items():
+                lines.append(f'        "{var_name}": result.get("{port_name}", ""),')
+        else:
+            lines.append("        # No outputs")
         
-        inputs_code = "\n".join(input_lines) if input_lines else "    pass  # No inputs"
-        outputs_code = "\n".join(output_lines) if output_lines else '        # No outputs'
+        lines.append("    }")
         
-        # Build the function
-        code = dedent(f'''\
-            def {func_name}(state: WorkflowState) -> dict:
-                """
-                Tool node: {tool.tool_type}
-                ID: {tool.element_id}
-                """
-                # Extract inputs from state
-            {inputs_code}
-                
-                # TODO: Implement actual tool call
-                # For now, return a placeholder
-                result = {{
-                    "results": f"[{tool.tool_type}] Executed",
-                }}
-                
-                # Return outputs to update state
-                return {{
-            {outputs_code}
-                }}
-        ''')
-        
-        return code.strip()
+        return "\n".join(lines)
     
     def _generate_condition_functions(self) -> Optional[str]:
         """Generate condition functions for conditional edges."""
@@ -301,20 +305,20 @@ class LangGraphCompiler(BaseCompiler):
         """Generate the entry point for running the workflow."""
         initial_state = self.state_generator.get_initial_state()
         
-        code = dedent(f'''\
-            # Compile the graph
-            app = workflow.compile()
-            
-            
-            # Initial state
-            {initial_state}
-            
-            
-            if __name__ == "__main__":
-                # Run the workflow
-                result = app.invoke(initial_state)
-                print("Final state:", result)
-        ''')
+        lines = [
+            "# Compile the graph",
+            "app = workflow.compile()",
+            "",
+            "",
+            "# Initial state",
+            initial_state,
+            "",
+            "",
+            'if __name__ == "__main__":',
+            "    # Run the workflow",
+            "    result = app.invoke(initial_state)",
+            '    print("Final state:", result)',
+        ]
         
-        return code.strip()
+        return "\n".join(lines)
 

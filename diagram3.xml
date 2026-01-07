@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" modified="2024-01-01T00:00:00.000Z" agent="5.0 (Windows)" etag="hawk_arch_gui" version="21.0.0" type="device">
+  <diagram id="hawk_arch_diagram" name="HAWK Architecture">
+    <mxGraphModel dx="1422" dy="794" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        
+        <!-- NEW GUI NODE -->
+        <mxCell id="node_gui" value="GUI Editor&#xa;(Drag &amp; Drop)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontStyle=1;arcSize=10;" vertex="1" parent="1">
+          <mxGeometry x="20" y="250" width="100" height="70" as="geometry" />
+        </mxCell>
+
+        <!-- GROUPS / CONTAINERS (Shifted Right +140px) -->
+        <mxCell id="group_frontend" value="Frontend (Language)" style="swimlane;whiteSpace=wrap;html=1;startSize=23;fillColor=#f5f5f5;fontColor=#333333;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="340" y="80" width="180" height="380" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="group_middle" value="Middle End (IR &amp; Analysis)" style="swimlane;whiteSpace=wrap;html=1;startSize=23;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="540" y="80" width="220" height="380" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="group_backend" value="Backend (Compilation)" style="swimlane;whiteSpace=wrap;html=1;startSize=23;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="780" y="80" width="200" height="380" as="geometry" />
+        </mxCell>
+
+        <!-- NODES (Shifted Right +140px) -->
+        <!-- Input: x=160 (was 20) -->
+        <mxCell id="node_input" value="User File&#xa;(.awdl)" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;fillColor=#fff2cc;strokeColor=#d6b656;align=center;" vertex="1" parent="1">
+          <mxGeometry x="160" y="240" width="70" height="90" as="geometry" />
+        </mxCell>
+        
+        <!-- CLI: x=250 (was 110) -->
+        <mxCell id="node_cli" value="CLI Entry&#xa;(cli.py)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="250" y="260" width="70" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- Frontend Nodes (Relative to Group - No Change needed) -->
+        <mxCell id="node_lexer" value="Lexer&#xa;(Tokenize)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;" vertex="1" parent="group_frontend">
+          <mxGeometry x="30" y="60" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="node_parser" value="Parser&#xa;(Parse)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;" vertex="1" parent="group_frontend">
+          <mxGeometry x="30" y="160" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="node_tokens" value="Tokens" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;" vertex="1" parent="group_frontend">
+          <mxGeometry x="70" y="130" width="40" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Middle End Nodes (Relative to Group - No Change needed) -->
+        <mxCell id="node_ir" value="IR Objects&#xa;(Workflow, Agent, Tool)" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fixedSize=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="group_middle">
+          <mxGeometry x="20" y="60" width="180" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="node_validate" value="Validator&#xa;(Cycle Detection)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;" vertex="1" parent="group_middle">
+          <mxGeometry x="50" y="160" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="node_dep" value="Dependency Analyzer&#xa;(Execution Order)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;" vertex="1" parent="group_middle">
+          <mxGeometry x="50" y="260" width="120" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Backend Nodes (Relative to Group - No Change needed) -->
+        <mxCell id="node_graphbuilder" value="Graph Builder&#xa;(Nodes &amp; Edges)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;" vertex="1" parent="group_backend">
+          <mxGeometry x="40" y="60" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="node_stategen" value="State Generator&#xa;(TypedDict)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;" vertex="1" parent="group_backend">
+          <mxGeometry x="40" y="160" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="node_codegen" value="Code Generator&#xa;(LangGraph)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontStyle=1" vertex="1" parent="group_backend">
+          <mxGeometry x="40" y="260" width="120" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Output: x=1000 (was 860) -->
+        <mxCell id="node_output" value="Generated Code&#xa;(_compiled.py)" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;fillColor=#d5e8d4;strokeColor=#82b366;align=center;" vertex="1" parent="1">
+          <mxGeometry x="1000" y="240" width="100" height="100" as="geometry" />
+        </mxCell>
+        
+        <!-- Runtime: x=990 (was 850) -->
+        <mxCell id="node_runtime" value="Runtime Execution&#xa;(LangGraph + StdLib)" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="990" y="380" width="120" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- EDGES -->
+        <!-- New Edge from GUI to Input -->
+        <mxCell id="edge_gui" edge="1" parent="1" source="node_gui" target="node_input">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="edge_1" edge="1" parent="1" source="node_input" target="node_cli">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_2" edge="1" parent="1" source="node_cli" target="node_lexer">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_3" edge="1" parent="1" source="node_lexer" target="node_parser">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_4" edge="1" parent="1" source="node_parser" target="node_ir">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_5" edge="1" parent="1" source="node_ir" target="node_validate">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_6" edge="1" parent="1" source="node_validate" target="node_dep">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_7" edge="1" parent="1" source="node_dep" target="node_graphbuilder">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_8" edge="1" parent="1" source="node_dep" target="node_stategen">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_9" edge="1" parent="1" source="node_graphbuilder" target="node_codegen">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_10" edge="1" parent="1" source="node_stategen" target="node_codegen">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_11" edge="1" parent="1" source="node_codegen" target="node_output">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_12" edge="1" parent="1" source="node_output" target="node_runtime">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1050" y="350" as="sourcePoint"/>
+            <mxPoint x="1050" y="370" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
