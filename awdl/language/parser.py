@@ -562,7 +562,8 @@ def parse_file(filepath: str) -> Workflow:
     Returns:
         A Workflow object
     """
-    with open(filepath, 'r') as f:
+    # Windows 下默认编码可能是 gbk，AWDL 文件建议统一用 UTF-8 保存
+    with open(filepath, "r", encoding="utf-8") as f:
         source = f.read()
     
     parser = Parser.from_source(source, filepath)

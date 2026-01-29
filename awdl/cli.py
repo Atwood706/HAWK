@@ -8,7 +8,7 @@ Commands: validate, compile, run
 import sys
 import json
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Any
 
 import click
 
@@ -172,8 +172,9 @@ def compile(filepath: str, target: str, output: Optional[str], verbose: bool):
 @click.option("--target", "-t", default="langgraph",
               type=click.Choice(["langgraph"]),
               help="Target framework to compile to")
+@click.option("--trace/--no-trace", default=False, help="Pretty print workflow steps (recommended for demos)")
 @click.option("--verbose", "-v", is_flag=True, help="Show detailed output")
-def run(filepath: str, input_json: Optional[str], target: str, verbose: bool):
+def run(filepath: str, input_json: Optional[str], target: str, trace: bool, verbose: bool):
     """
     Compile and run an AWDL workflow.
     
@@ -230,29 +231,69 @@ def run(filepath: str, input_json: Optional[str], target: str, verbose: bool):
                     click.echo(f"Invalid input format. Use JSON like '{example}' or key=value format", err=True)
                     sys.exit(1)
         
-        # For now, we just show what would be executed
-        # Actual execution would require the LangGraph runtime
+        # Execute compiled workflow in-process
+        exec_globals = {"__name__": "__awdl_exec__"}
+        exec(code, exec_globals)
+
+        app = exec_globals.get("app")
+        initial_state = exec_globals.get("initial_state", {})
+
+        if app is None:
+            click.echo("Execution error: compiled workflow did not expose `app`", err=True)
+            sys.exit(1)
+
+        # Merge state (input overrides defaults)
+        state = dict(initial_state or {})
+        state.update(input_state or {})
+
+        if verbose:
+            click.echo("\nInitial state (after overrides):")
+            click.echo(json.dumps(state, indent=2, ensure_ascii=False))
+
+        result = app.invoke(state)
+
         click.echo("\n" + "=" * 40)
-        click.echo("Workflow compiled successfully!")
+        click.echo("Workflow executed successfully!")
         click.echo("=" * 40)
-        click.echo(f"\nWorkflow: {workflow.name}")
-        click.echo(f"Elements: {len(workflow.elements)}")
-        
-        # Show execution order
-        analyzer = workflow.get_dependency_analyzer()
-        order = analyzer.get_execution_order()
-        
-        click.echo("\nExecution order:")
-        for i, element in enumerate(order, 1):
-            click.echo(f"  {i}. {element.element_id} ({type(element).__name__})")
-        
-        if input_state:
-            click.echo(f"\nInput state: {json.dumps(input_state, indent=2)}")
-        
-        click.echo("\n" + click.style(
-            "Note: To actually run the workflow, execute the generated Python file.",
-            fg="yellow"
-        ))
+
+        def _print_section(title: str, value: Any) -> None:
+            click.echo("\n" + "-" * 16 + f" {title} " + "-" * 16)
+            click.echo(str(value) if value is not None else "")
+
+        if trace:
+            # 面向演示：按 workflow 步骤分段展示关键字段
+            if isinstance(result, dict):
+                steps = [
+                    ("用户输入", "user_request"),
+                    ("创作者输出（draft）", "draft_poem"),
+                    ("编辑输出（notes）", "editor_notes"),
+                    ("整合输出（final）", "final_poem"),
+                ]
+                printed_any = False
+                for title, key in steps:
+                    if key in result:
+                        _print_section(f"{title}  [{key}]", result.get(key, ""))
+                        printed_any = True
+
+                if not printed_any:
+                    _print_section("Final state", json.dumps(result, indent=2, ensure_ascii=False, default=str))
+            else:
+                _print_section("Final result", result)
+            return
+
+        if verbose:
+            click.echo("\nFinal state:")
+            click.echo(json.dumps(result, indent=2, ensure_ascii=False, default=str))
+        else:
+            # 默认输出更“人类友好”：优先打印最终结果字段
+            for key in ("final_poem", "final_answer", "answer", "response", "output"):
+                if isinstance(result, dict) and key in result:
+                    click.echo(f"\n{key}:")
+                    click.echo(str(result.get(key, "")))
+                    break
+            else:
+                click.echo("\nFinal state:")
+                click.echo(json.dumps(result, indent=2, ensure_ascii=False, default=str))
         
     except AWDLError as e:
         click.echo(f"Error: {e}", err=True)

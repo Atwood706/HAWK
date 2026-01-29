@@ -91,32 +91,9 @@ class LangGraphCompiler(BaseCompiler):
         imports = [
             "from typing import TypedDict, Any, Optional",
             "from langgraph.graph import StateGraph, END",
+            "from stdlib.runtime import get_agent, get_tool",
         ]
-        
-        # Add stdlib imports based on what's used
-        agent_types = set()
-        tool_types = set()
-        
-        for element in self.workflow.get_all_elements_flat():
-            if isinstance(element, Agent):
-                agent_types.add(element.agent_type)
-            elif isinstance(element, Tool):
-                tool_types.add(element.tool_type)
-        
-        # Add imports for agents
-        if agent_types:
-            imports.append("")
-            imports.append("# Agent imports")
-            for agent_type in sorted(agent_types):
-                imports.append(f"# from stdlib.agents import {agent_type}")
-        
-        # Add imports for tools
-        if tool_types:
-            imports.append("")
-            imports.append("# Tool imports")
-            for tool_type in sorted(tool_types):
-                imports.append(f"# from stdlib.tools import {tool_type}")
-        
+
         return "\n".join(imports)
     
     def _generate_state_class(self) -> str:
@@ -155,16 +132,17 @@ class LangGraphCompiler(BaseCompiler):
         else:
             lines.append("    pass  # No inputs")
         
+        lines.extend(["", "    # Execute agent via stdlib runtime registry"])
+        lines.append(f'    _agent = get_agent("{agent.agent_type}")')
+        lines.append("    _kwargs = {}")
+        if agent.inputs:
+            for port_name in agent.inputs.keys():
+                lines.append(f'    _kwargs["{port_name}"] = {port_name}')
         lines.extend([
-            f"",
-            f"    # TODO: Implement actual agent call",
-            f"    # For now, return a placeholder",
-            f"    result = {{",
-            f'        "response": f"[{agent.agent_type}] Processed input",',
-            f"    }}",
-            f"",
-            f"    # Return outputs to update state",
-            f"    return {{",
+            "    result = _agent.execute(**_kwargs)",
+            "",
+            "    # Return outputs to update state",
+            "    return {",
         ])
         
         # Build output assignment
@@ -198,16 +176,17 @@ class LangGraphCompiler(BaseCompiler):
         else:
             lines.append("    pass  # No inputs")
         
+        lines.extend(["", "    # Execute tool via stdlib runtime registry"])
+        lines.append(f'    _tool = get_tool("{tool.tool_type}")')
+        lines.append("    _kwargs = {}")
+        if tool.inputs:
+            for port_name in tool.inputs.keys():
+                lines.append(f'    _kwargs["{port_name}"] = {port_name}')
         lines.extend([
-            f"",
-            f"    # TODO: Implement actual tool call",
-            f"    # For now, return a placeholder",
-            f"    result = {{",
-            f'        "results": f"[{tool.tool_type}] Executed",',
-            f"    }}",
-            f"",
-            f"    # Return outputs to update state",
-            f"    return {{",
+            "    result = _tool.execute(**_kwargs)",
+            "",
+            "    # Return outputs to update state",
+            "    return {",
         ])
         
         # Build output assignment

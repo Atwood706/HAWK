@@ -94,17 +94,6 @@ KEYWORDS: dict[str, TokenType] = {
     "false": TokenType.BOOL_LITERAL,
 }
 
-# Type keywords set for quick lookup
-TYPE_KEYWORDS: set[TokenType] = {
-    TokenType.TYPE_STRING,
-    TokenType.TYPE_INT,
-    TokenType.TYPE_FLOAT,
-    TokenType.TYPE_BOOL,
-    TokenType.TYPE_LIST,
-    TokenType.TYPE_FILE,
-    TokenType.TYPE_IMAGE,
-}
-
 # Single-character operators and delimiters
 SINGLE_CHAR_TOKENS: dict[str, TokenType] = {
     ':': TokenType.COLON,
@@ -130,6 +119,29 @@ TWO_CHAR_TOKENS: dict[str, TokenType] = {
     '>=': TokenType.GE,
 }
 
+# Type keywords set for quick lookup
+TYPE_KEYWORDS: set[TokenType] = {
+    TokenType.TYPE_STRING,
+    TokenType.TYPE_INT,
+    TokenType.TYPE_FLOAT,
+    TokenType.TYPE_BOOL,
+    TokenType.TYPE_LIST,
+    TokenType.TYPE_FILE,
+    TokenType.TYPE_IMAGE,
+}
+
+# Comparison operators set for quick lookup
+COMPARISON_OPERATORS: set[TokenType] = {
+    TokenType.EQ,
+    TokenType.NE,
+    TokenType.LT,
+    TokenType.GT,
+    TokenType.LE,
+    TokenType.GE,
+}
+
+
+
 
 @dataclass
 class Token:
@@ -149,14 +161,7 @@ class Token:
     
     def is_comparison_operator(self) -> bool:
         """Check if this token is a comparison operator."""
-        return self.type in {
-            TokenType.EQ,
-            TokenType.NE,
-            TokenType.LT,
-            TokenType.GT,
-            TokenType.LE,
-            TokenType.GE,
-        }
+        return self.type in COMPARISON_OPERATORS
 
 
 @dataclass

@@ -20,6 +20,7 @@ Requires-Dist: click>=8.0.0
 Requires-Dist: langgraph>=0.0.20
 Requires-Dist: langchain>=0.1.0
 Requires-Dist: langchain-openai>=0.0.5
+Requires-Dist: openai>=1.0.0
 Provides-Extra: dev
 Requires-Dist: pytest>=7.0.0; extra == "dev"
 Requires-Dist: pytest-cov>=4.0.0; extra == "dev"
@@ -75,14 +76,42 @@ __end__
 Compile and run:
 
 ```bash
-# Validate the workflow
-awdl validate example.awdl
+# 1. 验证工作流（检查语法和依赖）
+awdl validate examples/test.awdl --verbose
 
-# Compile to LangGraph
-awdl compile example.awdl --target langgraph -o workflow.py
+# 2. 编译成 Python（生成可执行的 LangGraph 代码）
+awdl compile examples/test.awdl --target langgraph -o workflow.py
 
-# Run directly
-awdl run example.awdl --input '{"user_query": "Hello"}'
+# 3. 运行工作流（使用 .awdl 文件中的默认值）
+awdl run examples/test.awdl
+
+# 4. 运行工作流（覆盖默认值，传入自定义输入）
+awdl run examples/test.awdl --input user_query=Hello
+```
+
+## 使用 DeepSeek API（OpenAI 兼容）
+
+本项目通过 `langchain-openai` 以 OpenAI 兼容方式调用 DeepSeek。
+
+在运行前设置环境变量：
+
+- **DEEPSEEK_API_KEY**：你的 DeepSeek Key（必需）
+- **DEEPSEEK_BASE_URL**：默认 `https://api.deepseek.com`（可选）
+- **DEEPSEEK_MODEL**：默认 `deepseek-chat`（可选）
+
+Windows PowerShell 示例：
+
+```powershell
+$env:DEEPSEEK_API_KEY="你的key"
+$env:DEEPSEEK_BASE_URL="https://api.deepseek.com"
+$env:DEEPSEEK_MODEL="deepseek-chat"
+```
+
+然后运行诗歌三 Agent 示例：
+
+```bash
+awdl run examples/poetry.awdl
+awdl run examples/poetry.awdl --input user_request=请写一首关于冬夜与灯火的现代诗
 ```
 
 ## Architecture

@@ -59,6 +59,31 @@ awdl run examples/test.awdl
 awdl run examples/test.awdl --input user_query=Hello
 ```
 
+## 使用 DeepSeek API（OpenAI 兼容）
+
+本项目通过 `langchain-openai` 以 OpenAI 兼容方式调用 DeepSeek。
+
+在运行前设置环境变量：
+
+- **DEEPSEEK_API_KEY**：你的 DeepSeek Key（必需）
+- **DEEPSEEK_BASE_URL**：默认 `https://api.deepseek.com`（可选）
+- **DEEPSEEK_MODEL**：默认 `deepseek-chat`（可选）
+
+Windows PowerShell 示例：
+
+```powershell
+$env:DEEPSEEK_API_KEY="你的key"
+$env:DEEPSEEK_BASE_URL="https://api.deepseek.com"
+$env:DEEPSEEK_MODEL="deepseek-chat"
+```
+
+然后运行诗歌三 Agent 示例：
+
+```bash
+awdl run examples/poetry.awdl
+awdl run examples/poetry.awdl --input user_request=请写一首关于冬夜与灯火的现代诗
+```
+
 ## Architecture
 
 AWDL uses a three-layer architecture:

@@ -4,9 +4,13 @@ AWDL Standard Library - LLM Agent
 This module provides the LLM Agent implementation for AWDL workflows.
 """
 
-from typing import Dict, Any, Optional
+from __future__ import annotations
+
+import os
+from typing import Dict, Any, Optional, List
 from dataclasses import dataclass
 
+from openai import OpenAI
 
 @dataclass
 class LLMAgent:
@@ -25,9 +29,40 @@ class LLMAgent:
         response: The LLM's text response
     """
     
-    model: str = "gpt-4"
+    # DeepSeek 提供 OpenAI 兼容接口，默认模型用 deepseek-chat
+    model: str = "deepseek-chat"
     temperature: float = 0.7
     max_tokens: int = 1024
+    base_url: Optional[str] = None
+    api_key: Optional[str] = None
+
+    _client: Optional[OpenAI] = None
+
+    def _get_client(self) -> OpenAI:
+        """
+        获取（并缓存）底层 OpenAI 兼容客户端（DeepSeek）。
+
+        - DeepSeek: base_url=https://api.deepseek.com/v1（推荐）
+        - api_key: 优先 DEEPSEEK_API_KEY，其次 OPENAI_API_KEY
+        """
+        if self._client is not None:
+            return self._client
+
+        api_key = self.api_key or os.getenv("DEEPSEEK_API_KEY") or os.getenv("OPENAI_API_KEY")
+        if not api_key:
+            raise RuntimeError(
+                "未找到 API Key：请设置环境变量 DEEPSEEK_API_KEY（推荐）或 OPENAI_API_KEY"
+            )
+
+        base_url = (
+            self.base_url
+            or os.getenv("DEEPSEEK_BASE_URL")
+            or os.getenv("OPENAI_BASE_URL")
+            or "https://api.deepseek.com/v1"
+        )
+
+        self._client = OpenAI(api_key=api_key, base_url=base_url)
+        return self._client
     
     def execute(
         self,
@@ -46,20 +81,24 @@ class LLMAgent:
         Returns:
             Dictionary with 'response' key containing the LLM output
         """
-        # Build the full prompt
-        full_prompt = ""
-        
+        messages: List[dict] = []
         if system_prompt:
-            full_prompt += f"System: {system_prompt}\n\n"
-        
+            messages.append({"role": "system", "content": system_prompt})
+
         if context:
-            full_prompt += f"Context: {context}\n\n"
-        
-        full_prompt += f"User: {prompt}"
-        
-        # TODO: Implement actual LLM call
-        # This is a placeholder implementation
-        response = f"[LLM Agent ({self.model})] Processed: {prompt[:50]}..."
+            # 把 context 当作额外信息塞进用户侧消息，便于三段式工作流传递中间产物
+            prompt = f"上下文：\n{context}\n\n任务：\n{prompt}"
+
+        messages.append({"role": "user", "content": prompt})
+
+        client = self._get_client()
+        resp = client.chat.completions.create(
+            model=self.model,
+            messages=messages,
+            temperature=self.temperature,
+            max_tokens=self.max_tokens,
+        )
+        response = (resp.choices[0].message.content or "").strip()
         
         return {
             "response": response,
@@ -78,8 +117,10 @@ class LLMAgent:
         """
         config = config or {}
         return cls(
-            model=config.get("model", "gpt-4"),
+            model=config.get("model") or os.getenv("DEEPSEEK_MODEL") or os.getenv("AWDL_LLM_MODEL") or "deepseek-chat",
             temperature=config.get("temperature", 0.7),
             max_tokens=config.get("max_tokens", 1024),
+            base_url=config.get("base_url") or os.getenv("DEEPSEEK_BASE_URL") or os.getenv("OPENAI_BASE_URL"),
+            api_key=config.get("api_key") or os.getenv("DEEPSEEK_API_KEY") or os.getenv("OPENAI_API_KEY"),
         )
 

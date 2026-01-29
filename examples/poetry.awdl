@@ -1,0 +1,52 @@
+import hawk.agents.llm
+
+__start__
+
+# 你可以用 `awdl run ... --input user_request=...` 覆盖默认主题
+string user_request: "请以“春天的思念”为主题创作一首现代诗，12行以内，意象清晰。"
+
+string poet_system: "你是一位诗歌创作者。请创作原创现代诗，语言凝练，有画面感。仅输出诗歌正文，不要解释，不要Markdown标记（不要##、**、列表符号）。"
+string editor_system: "你是一位严格但友善的诗歌编辑。请从意象、节奏、用词、结构四方面评价，并给出3条可执行的修改建议。输出可用小标题，但请避免多余的装饰性Markdown。"
+string integrator_system: "你是一位诗歌整合者。请基于原诗与编辑建议，重写更好的版本，保留主题与核心意象，12行以内。仅输出最终诗歌正文，不要解释，不要Markdown标记（不要##、**、列表符号）。"
+
+string editor_task: "请评价上下文中的诗歌，并给出3条修改建议。"
+string integrator_task: "请基于上下文（原诗+编辑建议）重写一首更好的诗。"
+
+string draft_poem
+string editor_notes
+string combined_context
+string final_poem
+
+# 1) 诗歌创作
+llm_agent: {
+    system_prompt: poet_system,
+    prompt: user_request,
+    response: draft_poem
+}
+
+# 2) 诗歌编辑（评价与建议）
+llm_agent: {
+    system_prompt: editor_system,
+    context: draft_poem,
+    prompt: editor_task,
+    response: editor_notes
+}
+
+# 3) 拼接“原诗 + 建议”为整合上下文
+text_concat: {
+    left: draft_poem,
+    right: editor_notes,
+    result: combined_context
+}
+
+# 4) 整合重写最终诗歌
+llm_agent: {
+    system_prompt: integrator_system,
+    context: combined_context,
+    prompt: integrator_task,
+    response: final_poem
+}
+
+__end__
+
+
