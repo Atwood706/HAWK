@@ -21,6 +21,7 @@ Requires-Dist: langgraph>=0.0.20
 Requires-Dist: langchain>=0.1.0
 Requires-Dist: langchain-openai>=0.0.5
 Requires-Dist: openai>=1.0.0
+Requires-Dist: playwright>=1.40.0
 Provides-Extra: dev
 Requires-Dist: pytest>=7.0.0; extra == "dev"
 Requires-Dist: pytest-cov>=4.0.0; extra == "dev"
@@ -43,6 +44,9 @@ AWDL is a domain-specific language for defining agent workflows in a simple, dec
 
 ```bash
 pip install -e .
+
+# 如果需要使用 draw.io 图表自动生成功能，还需安装浏览器驱动
+playwright install chromium
 ```
 
 ## Quick Start
@@ -107,11 +111,32 @@ $env:DEEPSEEK_BASE_URL="https://api.deepseek.com"
 $env:DEEPSEEK_MODEL="deepseek-chat"
 ```
 
-然后运行诗歌三 Agent 示例：
+然后运行示例：
 
 ```bash
-awdl run examples/poetry.awdl
+# 诗歌创作（三 Agent 协作）
+awdl run examples/poetry.awdl --trace
 awdl run examples/poetry.awdl --input user_request=请写一首关于冬夜与灯火的现代诗
+
+# 文件总结（读文件 → LLM 总结 → 写文件）
+awdl run examples/file_summarize.awdl --trace
+
+# Draw.io 流程图生成（LLM 生成 XML → 浏览器自动化渲染 → 保存图片）
+awdl run examples/diagram_drawio.awdl --trace
+awdl run examples/diagram_drawio.awdl --input "user_description=画一个登录流程：用户输入→验证身份→成功/失败分支→结束"
+```
+
+文件读写 + 总结 示例：
+
+```bash
+# 准备 input.txt（示例）
+echo "这是需要总结的内容。" > input.txt
+
+# 运行示例
+awdl run examples/file_summarize.awdl --trace
+
+# 查看输出
+type summary.txt
 ```
 
 ## Architecture

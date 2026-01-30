@@ -256,27 +256,27 @@ def run(filepath: str, input_json: Optional[str], target: str, trace: bool, verb
         click.echo("Workflow executed successfully!")
         click.echo("=" * 40)
 
-        def _print_section(title: str, value: Any) -> None:
+        def _print_section(title: str, value: Any, max_len: int | None = None) -> None:
             click.echo("\n" + "-" * 16 + f" {title} " + "-" * 16)
-            click.echo(str(value) if value is not None else "")
+            if value is None:
+                click.echo("")
+                return
+            text = str(value)
+            if max_len is not None and len(text) > max_len:
+                text = text[:max_len] + "\n...（内容过长，已省略）"
+            click.echo(text)
 
         if trace:
-            # 面向演示：按 workflow 步骤分段展示关键字段
+            # 面向演示：展示所有非空字段
             if isinstance(result, dict):
-                steps = [
-                    ("用户输入", "user_request"),
-                    ("创作者输出（draft）", "draft_poem"),
-                    ("编辑输出（notes）", "editor_notes"),
-                    ("整合输出（final）", "final_poem"),
-                ]
-                printed_any = False
-                for title, key in steps:
-                    if key in result:
-                        _print_section(f"{title}  [{key}]", result.get(key, ""))
-                        printed_any = True
-
-                if not printed_any:
-                    _print_section("Final state", json.dumps(result, indent=2, ensure_ascii=False, default=str))
+                # 按顺序显示所有结果字段
+                for key, value in result.items():
+                    # 跳过空值
+                    if value is None or value == "" or value == []:
+                        continue
+                    # 长内容截断显示
+                    max_len = 2000 if key in ("page_content", "content", "file_content") else None
+                    _print_section(key, value, max_len=max_len)
             else:
                 _print_section("Final result", result)
             return

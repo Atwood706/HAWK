@@ -34,6 +34,7 @@ stdlib/agents/llm.py
 stdlib/agents/router.py
 stdlib/tools/__init__.py
 stdlib/tools/file_io.py
+stdlib/tools/web_automation.py
 stdlib/tools/web_search.py
 tests/test_compiler.py
 tests/test_parser.py

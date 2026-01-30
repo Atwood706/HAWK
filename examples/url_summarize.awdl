@@ -1,0 +1,40 @@
+# 网页内容总结示例
+# 
+# 通用的网页抓取 + LLM 总结工作流
+#
+# 用法：
+#   awdl run examples/url_summarize.awdl --trace
+#   awdl run examples/url_summarize.awdl --input target_url="https://example.com"
+
+import hawk.tools.web_fetch
+import hawk.agents.llm
+
+__start__
+
+# 输入：要抓取的网页 URL
+string target_url: "https://news.ycombinator.com"
+
+# 用户的分析需求（可自定义）
+string user_request: "请总结这个网页的主要内容，列出关键信息点"
+
+# 中间变量：抓取到的网页内容
+string page_content
+
+# 输出：分析结果
+string analysis_result
+
+# 步骤1：抓取网页内容
+web_fetch: {
+    url: target_url,
+    content: page_content
+}
+
+# 步骤2：用 LLM 分析内容
+llm_agent: {
+    context: page_content,
+    prompt: user_request,
+    response: analysis_result
+}
+
+__end__
+

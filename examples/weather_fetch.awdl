@@ -1,0 +1,42 @@
+# 天气信息抓取示例
+# 
+# 这个示例展示如何：
+# 1. 使用 web_fetch 抓取指定网页内容
+# 2. 使用 llm_agent 对抓取的内容进行分析总结
+#
+# 用法：
+#   awdl run examples/weather_fetch.awdl --trace
+#   awdl run examples/weather_fetch.awdl --input weather_url="https://www.weather.com.cn/weather/101010100.shtml"
+
+import hawk.tools.web_fetch
+import hawk.agents.llm
+
+__start__
+
+# 输入：要抓取的天气网页 URL
+string weather_url: "https://www.weather.com.cn/weather1d/101010100.shtml"
+
+# 系统提示词
+string sys_prompt: "你是一个天气分析助手。请从以下网页内容中提取天气信息，并给出简洁的天气总结，包括：当前温度、天气状况、风力、空气质量等。如果内容中没有天气信息，请说明。"
+
+# 中间变量：抓取到的网页内容
+string page_content
+
+# 输出：天气分析结果
+string weather_summary
+
+# 步骤1：抓取网页内容
+web_fetch: {
+    url: weather_url,
+    content: page_content
+}
+
+# 步骤2：用 LLM 分析天气数据
+llm_agent: {
+    prompt: page_content,
+    system_prompt: sys_prompt,
+    response: weather_summary
+}
+
+__end__
+

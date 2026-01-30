@@ -1,0 +1,39 @@
+import hawk.agents.llm
+import hawk.tools.file_io
+
+__start__
+
+# 读取 input.txt，总结后写回 summary.txt
+string in_path: "input.txt"
+string out_path: "summary.txt"
+string file_content
+string summary
+string summary_system: "请把上下文内容总结成5条要点，每条不超过20字。输出纯文本，不要Markdown。"
+string summary_prompt: "开始总结"
+bool write_ok
+string read_error
+string write_error
+
+file_read: {
+  path: in_path,
+  content: file_content,
+  error: read_error
+}
+
+llm_agent: {
+  system_prompt: summary_system,
+  context: file_content,
+  prompt: summary_prompt,
+  response: summary
+}
+
+file_write: {
+  path: out_path,
+  content: summary,
+  success: write_ok,
+  error: write_error
+}
+
+__end__
+
+# awdl run examples\file_summarize.awdl --trace

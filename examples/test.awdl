@@ -35,3 +35,4 @@ if final_answer == "":
 
 __end__
 
+# awdl run examples\poetry.awdl --trace --input "user_request=请写一首关于冬夜与灯火的现代诗，12行以内"

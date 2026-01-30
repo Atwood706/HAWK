@@ -272,7 +272,7 @@ class Parser:
         self.expect(TokenType.LBRACE)
         
         # Parse bindings
-        inputs, outputs = self.parse_binding_list()
+        inputs, outputs = self.parse_binding_list(element_type)
         
         # Expect closing brace
         self.expect(TokenType.RBRACE)
@@ -302,7 +302,7 @@ class Parser:
                 column=name_token.column,
             )
     
-    def parse_binding_list(self) -> tuple[dict, dict]:
+    def parse_binding_list(self, element_type: str) -> tuple[dict, dict]:
         """
         Parse a list of bindings.
         
@@ -315,7 +315,7 @@ class Parser:
         outputs = {}
         
         while not self.match(TokenType.RBRACE, TokenType.EOF):
-            port_name, var_name, is_output = self.parse_binding()
+            port_name, var_name, is_output = self.parse_binding(element_type)
             
             if is_output:
                 outputs[port_name] = var_name
@@ -334,7 +334,7 @@ class Parser:
         
         return inputs, outputs
     
-    def parse_binding(self) -> tuple[str, str, bool]:
+    def parse_binding(self, element_type: str) -> tuple[str, str, bool]:
         """
         Parse a single binding.
         
@@ -343,9 +343,9 @@ class Parser:
         Returns:
             Tuple of (port_name, variable_name, is_output)
             
-        Note: We determine input vs output by convention:
-        - If the port name is "response", "output", "result", "results" -> output
-        - Otherwise -> input
+        Note: We determine input vs output by convention or builtin registry:
+        - If builtin definition exists, use its outputs list
+        - Otherwise, fallback to heuristic
         """
         # Parse port name
         port_token = self.expect(TokenType.IDENTIFIER)
@@ -359,8 +359,32 @@ class Parser:
         var_name = var_token.value
         
         # Determine if this is an output binding
-        output_ports = {"response", "output", "result", "results", "answer", "final_answer"}
-        is_output = port_name.lower() in output_ports
+        is_output = False
+        try:
+            from awdl.ir.builtins import BUILTIN_REGISTRY
+            definition = BUILTIN_REGISTRY.get(element_type)
+            if definition:
+                is_output = port_name in definition.output_names
+            else:
+                output_ports = {
+                    "response",
+                    "output",
+                    "result",
+                    "results",
+                    "answer",
+                    "final_answer",
+                }
+                is_output = port_name.lower() in output_ports
+        except Exception:
+            output_ports = {
+                "response",
+                "output",
+                "result",
+                "results",
+                "answer",
+                "final_answer",
+            }
+            is_output = port_name.lower() in output_ports
         
         return port_name, var_name, is_output
     

@@ -1,0 +1,39 @@
+import hawk.agents.llm
+import hawk.tools.web_automation
+
+__start__
+
+# 用户描述图表内容（可用 --input 覆盖）
+string user_description: "画一个简单的流程图：开始 → 数据处理 → 结束"
+
+# 输出图片路径
+string output_image: "diagram.png"
+
+# 系统提示词：让 LLM 生成 SVG 代码
+string svg_system: "你是 SVG 图表代码生成专家。请根据用户描述生成 SVG 流程图代码。严格要求：1) 输出完整 <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 200'>；2) 先在 <defs> 中定义箭头：<marker id='arrow' markerWidth='10' markerHeight='10' refX='9' refY='3' orient='auto'><path d='M0,0 L0,6 L9,3 z' fill='#333'/></marker>；3) 节点之间要有足够间距（至少 50px），连接线的终点 x2 要在目标节点左边缘之前（留出箭头空间）；4) 使用 <rect rx='15'> 绘制圆角矩形，<ellipse> 绘制椭圆；5) 连接线用 <line stroke='#333' stroke-width='2' marker-end='url(#arrow)'/>；6) 文字用 <text text-anchor='middle' dominant-baseline='middle'>；7) 颜色：浅蓝 #e3f2fd、浅绿 #c8e6c9、浅橙 #ffe0b2；8) 只输出纯 SVG，不要 Markdown。"
+
+string svg_prompt: "请生成 SVG 流程图代码"
+
+# 变量
+string svg_code
+string render_success
+string render_error
+
+# 1) LLM 生成 SVG 代码
+llm_agent: {
+    system_prompt: svg_system,
+    context: user_description,
+    prompt: svg_prompt,
+    response: svg_code
+}
+
+# 2) 渲染成图片（本地 Playwright，无需外部 API）
+render_svg: {
+    svg_code: svg_code,
+    output_path: output_image,
+    success: render_success,
+    error: render_error
+}
+
+__end__
+

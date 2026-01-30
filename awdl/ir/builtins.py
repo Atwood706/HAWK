@@ -85,7 +85,35 @@ class BuiltinRegistry:
         self.register(BuiltinDefinition(
             name="llm_agent",
             category=ElementCategory.AGENT,
-            description="Large Language Model agent for text generation",
+            description="[Deprecated] Use deepseek_agent instead",
+            inputs=[
+                PortDefinition(name="prompt", description="The prompt to send to the LLM", required=True),
+                PortDefinition(name="context", description="Optional context for the LLM", required=False),
+                PortDefinition(name="system_prompt", description="Optional system prompt", required=False),
+            ],
+            outputs=[
+                PortDefinition(name="response", description="The LLM's response"),
+            ],
+        ))
+
+        self.register(BuiltinDefinition(
+            name="deepseek_agent",
+            category=ElementCategory.AGENT,
+            description="DeepSeek LLM agent for text generation",
+            inputs=[
+                PortDefinition(name="prompt", description="The prompt to send to the LLM", required=True),
+                PortDefinition(name="context", description="Optional context for the LLM", required=False),
+                PortDefinition(name="system_prompt", description="Optional system prompt", required=False),
+            ],
+            outputs=[
+                PortDefinition(name="response", description="The LLM's response"),
+            ],
+        ))
+
+        self.register(BuiltinDefinition(
+            name="qwen_agent",
+            category=ElementCategory.AGENT,
+            description="Qwen LLM agent for text generation",
             inputs=[
                 PortDefinition(name="prompt", description="The prompt to send to the LLM", required=True),
                 PortDefinition(name="context", description="Optional context for the LLM", required=False),
@@ -136,6 +164,19 @@ class BuiltinRegistry:
         ))
         
         self.register(BuiltinDefinition(
+            name="web_fetch",
+            category=ElementCategory.TOOL,
+            description="Fetch and extract text content from a URL",
+            inputs=[
+                PortDefinition(name="url", description="URL to fetch", required=True),
+            ],
+            outputs=[
+                PortDefinition(name="content", description="Extracted text content"),
+                PortDefinition(name="error", description="Error message if fetch failed", required=False),
+            ],
+        ))
+        
+        self.register(BuiltinDefinition(
             name="file_read",
             category=ElementCategory.TOOL,
             description="Read contents of a file",
@@ -144,6 +185,7 @@ class BuiltinRegistry:
             ],
             outputs=[
                 PortDefinition(name="content", description="File contents"),
+                PortDefinition(name="error", description="Error message if read failed", required=False),
             ],
         ))
         
@@ -157,6 +199,36 @@ class BuiltinRegistry:
             ],
             outputs=[
                 PortDefinition(name="success", description="Whether write succeeded"),
+                PortDefinition(name="error", description="Error message if write failed", required=False),
+            ],
+        ))
+        
+        self.register(BuiltinDefinition(
+            name="render_svg",
+            category=ElementCategory.TOOL,
+            description="Render SVG diagram to PNG image using Playwright (local)",
+            inputs=[
+                PortDefinition(name="svg_code", description="SVG diagram code", required=True),
+                PortDefinition(name="output_path", description="Path to save PNG image", required=True),
+            ],
+            outputs=[
+                PortDefinition(name="success", description="Whether rendering succeeded"),
+                PortDefinition(name="error", description="Error message if failed"),
+            ],
+        ))
+        
+        # Alias for backward compatibility
+        self.register(BuiltinDefinition(
+            name="render_drawio",
+            category=ElementCategory.TOOL,
+            description="[Deprecated] Use render_svg instead",
+            inputs=[
+                PortDefinition(name="xml_code", description="SVG/XML code", required=True),
+                PortDefinition(name="output_path", description="Path to save PNG image", required=True),
+            ],
+            outputs=[
+                PortDefinition(name="success", description="Whether rendering succeeded"),
+                PortDefinition(name="error", description="Error message if failed"),
             ],
         ))
     
@@ -206,6 +278,16 @@ BUILTIN_AGENTS: Dict[str, Dict[str, Any]] = {
         "outputs": ["response"],
         "required_inputs": ["prompt"],
     },
+    "deepseek_agent": {
+        "inputs": ["prompt", "context"],
+        "outputs": ["response"],
+        "required_inputs": ["prompt"],
+    },
+    "qwen_agent": {
+        "inputs": ["prompt", "context"],
+        "outputs": ["response"],
+        "required_inputs": ["prompt"],
+    },
     "router_agent": {
         "inputs": ["query", "routes"],
         "outputs": ["selected_route"],
@@ -223,6 +305,11 @@ BUILTIN_TOOLS: Dict[str, Dict[str, Any]] = {
         "inputs": ["query"],
         "outputs": ["results"],
         "required_inputs": ["query"],
+    },
+    "web_fetch": {
+        "inputs": ["url"],
+        "outputs": ["content"],
+        "required_inputs": ["url"],
     },
     "file_read": {
         "inputs": ["path"],

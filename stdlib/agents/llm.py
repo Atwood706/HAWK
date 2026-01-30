@@ -1,7 +1,7 @@
 """
-AWDL Standard Library - LLM Agent
+AWDL Standard Library - DeepSeek Agent
 
-This module provides the LLM Agent implementation for AWDL workflows.
+This module provides the DeepSeek LLM Agent implementation for AWDL workflows.
 """
 
 from __future__ import annotations
@@ -13,9 +13,9 @@ from dataclasses import dataclass
 from openai import OpenAI
 
 @dataclass
-class LLMAgent:
+class DeepSeekAgent:
     """
-    Large Language Model Agent.
+    DeepSeek LLM Agent.
     
     This agent processes text inputs using a language model and produces
     text outputs.
@@ -105,7 +105,7 @@ class LLMAgent:
         }
     
     @classmethod
-    def create(cls, config: Optional[Dict[str, Any]] = None) -> "LLMAgent":
+    def create(cls, config: Optional[Dict[str, Any]] = None) -> "DeepSeekAgent":
         """
         Create an LLM agent with configuration.
         
@@ -123,4 +123,8 @@ class LLMAgent:
             base_url=config.get("base_url") or os.getenv("DEEPSEEK_BASE_URL") or os.getenv("OPENAI_BASE_URL"),
             api_key=config.get("api_key") or os.getenv("DEEPSEEK_API_KEY") or os.getenv("OPENAI_API_KEY"),
         )
+
+
+# Backward-compatible alias
+LLMAgent = DeepSeekAgent
 

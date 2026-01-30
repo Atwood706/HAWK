@@ -1,0 +1,14 @@
+import hawk.tools.web_search
+
+__start__
+
+string query: "Good Hiking Place"
+string results
+
+web_search: {
+    query: query,
+    results: results
+}
+
+__end__
+
