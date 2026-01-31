@@ -1,0 +1,156 @@
+import stdlib.agents.llm
+import stdlib.tools.pubmed_search
+import stdlib.tools.file_io
+
+__start__
+
+# ===== 输入（运行时用 --input 覆盖默认值）=====
+string patient_case: "Adult, 55y. Hypertension + type 2 diabetes. On metformin. Planned iodinated contrast CT. Renal function unknown."
+
+string med_list: "metformin 500mg bid; lisinopril 10mg qd; diclofenac 75 mg bid"
+
+string focus_question: "Check drug-drug interactions, contraindications/cautions, renal/hepatic considerations, monitoring, and patient counseling."
+
+# ===== 工具检索相关 =====
+string pubmed_query
+string pubmed_results
+list pubmed_pmids
+string pubmed_error
+
+# ===== 多 Agent 输出 =====
+string intake_json
+string evidence_pack
+string safety_review
+string clinician_report
+string patient_note
+string patient_rewrite_prompt: "Rewrite for patient"
+
+# ===== 拼接辅助（当前语言不支持 '+'，用 text_concat tool 组合）=====
+string prefix_intake: "Intake:\n"
+string prefix_evidence: "\n\nEvidence:\n"
+string prefix_safety: "\n\nSafety:\n"
+string ctx_step_1
+string ctx_step_2
+string ctx_all
+
+# ===== 写文件 =====
+string report_path: "outputs/med_safety_report.md"
+string patient_path: "outputs/patient_note.md"
+string write_ok
+
+# ===== system prompts =====
+string sp_intake: "You are a medication reconciliation assistant. Use the medication list provided in context (上下文) as the source of truth for meds. Extract STRICT JSON only with keys: demographics, conditions, meds (each with name/dose/frequency/route if present), allergies, pregnancy_status, renal_function, hepatic_function, missing_info_questions. Output raw JSON only (no Markdown, no code fences)."
+
+string sp_build_query: "You are a medical literature search specialist. Given meds and patient context, output ONE PubMed query string only. Prefer interactions, contraindications, renal injury risk, and high-quality evidence (review OR guideline OR label)."
+
+string sp_evidence: "You are a medication safety pharmacist. Using ONLY the PubMed results text provided, produce an evidence pack in Markdown.\nHard limits: max 8 bullets total, concise sentences only.\nSections:\n1) Key findings (max 5 bullets)\n2) Uncertainties (max 2 bullets)\n3) Questions to ask / tests to obtain next (max 3 bullets)\nCitations rule: every bullet must include PMID and PubMed URL.\nFormatting rules: no code fences.\nEnd with a single line: END_OF_REPORT"
+
+string sp_critic: "You are a safety critic. Identify overconfident statements, missing critical patient info (e.g., kidney function), dangerous advice, and red flags requiring urgent care.\nHard limits: max 10 bullets total.\nOutput Markdown with headings: Risk flags; Missing info; Safer alternative wording.\nFormatting rules: no code fences.\nEnd with a single line: END_OF_REPORT"
+
+string sp_final: "You are the final clinical summarizer. Create a conservative clinician-facing report. Must include: summary, key risks, recommended next steps (tests/questions), monitoring plan, and a clear disclaimer that this is not medical advice."
+
+string sp_patient: "Rewrite the clinician report into a patient-friendly note. Avoid jargon. Include do/don'ts and when to seek urgent care."
+
+# ===== 1) Intake =====
+deepseek_agent: {
+    system_prompt: sp_intake,
+    prompt: patient_case,
+    context: med_list,
+    response: intake_json
+}
+
+# ===== 2) Build PubMed query =====
+deepseek_agent: {
+    system_prompt: sp_build_query,
+    prompt: med_list,
+    context: intake_json,
+    response: pubmed_query
+}
+
+# ===== 3) PubMed search (reliable medical retrieval) =====
+pubmed_search: {
+    query: pubmed_query,
+    results: pubmed_results,
+    pmids: pubmed_pmids,
+    error: pubmed_error
+}
+
+# ===== 4) Evidence pack from PubMed hits =====
+deepseek_agent: {
+    system_prompt: sp_evidence,
+    prompt: focus_question,
+    context: pubmed_results,
+    response: evidence_pack
+}
+
+# ===== 5) Safety review =====
+deepseek_agent: {
+    system_prompt: sp_critic,
+    prompt: focus_question,
+    context: evidence_pack,
+    response: safety_review
+}
+
+# ===== 6) Build final context (concat) =====
+text_concat: {
+    left: prefix_intake,
+    right: intake_json,
+    result: ctx_step_1
+}
+
+text_concat: {
+    left: ctx_step_1,
+    right: prefix_evidence,
+    result: ctx_step_2
+}
+
+text_concat: {
+    left: ctx_step_2,
+    right: evidence_pack,
+    result: ctx_step_1
+}
+
+text_concat: {
+    left: ctx_step_1,
+    right: prefix_safety,
+    result: ctx_step_2
+}
+
+text_concat: {
+    left: ctx_step_2,
+    right: safety_review,
+    result: ctx_all
+}
+
+# ===== 6) Final clinician report =====
+deepseek_agent: {
+    system_prompt: sp_final,
+    prompt: focus_question,
+    context: ctx_all,
+    response: clinician_report
+}
+
+# ===== 7) Patient note =====
+deepseek_agent: {
+    system_prompt: sp_patient,
+    prompt: patient_rewrite_prompt,
+    context: clinician_report,
+    response: patient_note
+}
+
+# ===== 8) Persist outputs =====
+file_write: {
+    path: report_path,
+    content: clinician_report,
+    success: write_ok
+}
+
+file_write: {
+    path: patient_path,
+    content: patient_note,
+    success: write_ok
+}
+
+__end__
+
+

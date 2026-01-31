@@ -1,0 +1,19 @@
+import stdlib.tools.pubmed_search
+
+__start__
+
+string query: "ibuprofen lisinopril interaction acute kidney injury"
+string results
+list pmids
+string error
+
+pubmed_search: {
+    query: query,
+    results: results,
+    pmids: pmids,
+    error: error
+}
+
+__end__
+
+

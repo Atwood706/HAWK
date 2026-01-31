@@ -175,6 +175,25 @@ class BuiltinRegistry:
                 PortDefinition(name="error", description="Error message if fetch failed", required=False),
             ],
         ))
+
+        self.register(BuiltinDefinition(
+            name="pubmed_search",
+            category=ElementCategory.TOOL,
+            description="Search PubMed (NCBI E-utilities) for medical literature",
+            inputs=[
+                PortDefinition(name="query", description="PubMed search query", required=True),
+                PortDefinition(name="max_results", description="Maximum results to return", required=False, default=10),
+                PortDefinition(name="sort", description="Sort order (e.g., relevance, date)", required=False, default="relevance"),
+                PortDefinition(name="include_abstracts", description="Whether to fetch abstracts via EFetch", required=False, default=False),
+                PortDefinition(name="mindate", description="Start date (YYYY or YYYY/MM/DD)", required=False),
+                PortDefinition(name="maxdate", description="End date (YYYY or YYYY/MM/DD)", required=False),
+            ],
+            outputs=[
+                PortDefinition(name="results", description="Formatted PubMed results"),
+                PortDefinition(name="pmids", description="List of PMIDs"),
+                PortDefinition(name="error", description="Error message if failed", required=False),
+            ],
+        ))
         
         self.register(BuiltinDefinition(
             name="file_read",
@@ -310,6 +329,11 @@ BUILTIN_TOOLS: Dict[str, Dict[str, Any]] = {
         "inputs": ["url"],
         "outputs": ["content"],
         "required_inputs": ["url"],
+    },
+    "pubmed_search": {
+        "inputs": ["query", "max_results", "sort", "include_abstracts", "mindate", "maxdate"],
+        "outputs": ["results", "pmids", "error"],
+        "required_inputs": ["query"],
     },
     "file_read": {
         "inputs": ["path"],

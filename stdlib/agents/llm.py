@@ -119,7 +119,12 @@ class DeepSeekAgent:
         return cls(
             model=config.get("model") or os.getenv("DEEPSEEK_MODEL") or os.getenv("AWDL_LLM_MODEL") or "deepseek-chat",
             temperature=config.get("temperature", 0.7),
-            max_tokens=config.get("max_tokens", 1024),
+            max_tokens=int(
+                config.get("max_tokens")
+                or os.getenv("AWDL_LLM_MAX_TOKENS")
+                or os.getenv("DEEPSEEK_MAX_TOKENS")
+                or 1024
+            ),
             base_url=config.get("base_url") or os.getenv("DEEPSEEK_BASE_URL") or os.getenv("OPENAI_BASE_URL"),
             api_key=config.get("api_key") or os.getenv("DEEPSEEK_API_KEY") or os.getenv("OPENAI_API_KEY"),
         )
