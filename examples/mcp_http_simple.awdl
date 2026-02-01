@@ -1,0 +1,33 @@
+import hawk.agents.llm
+
+__start__
+
+# 简单测试：调用公开 API
+string server: "stdio:python D:\\桌面\\HAWK\\external\\mcp-server-http\\src\\mcp_server_http\\server.py"
+string tool: "http_request"
+string args_json: "{\"url\":\"https://httpbin.org/get\",\"method\":\"GET\",\"params\":{\"test\":\"value\"}}"
+
+string result_json
+string error
+
+mcp_call: {
+    server: server,
+    tool: tool,
+    args_json: args_json,
+    result: result_json,
+    error: error
+}
+
+# 让 LLM 解析结果
+string prompt: "这是一个 HTTP GET 请求的返回结果（MCP CallToolResult JSON 格式）。请从中提取 status_code、ok 字段，以及响应体的关键内容，并用中文总结。"
+
+string summary
+
+llm_agent: {
+    context: result_json,
+    prompt: prompt,
+    response: summary
+}
+
+__end__
+

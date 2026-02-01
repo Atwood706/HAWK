@@ -1,0 +1,129 @@
+import hawk.agents.llm
+import hawk.tools.file_io
+
+__start__
+
+# ============================================
+# 示例 1: 简单 GET 请求（GitHub API）
+# ============================================
+
+string server: "stdio:python D:\\桌面\\HAWK\\external\\mcp-server-http\\src\\mcp_server_http\\server.py"
+string tool: "http_request"
+
+# 请求 GitHub 用户信息
+string args_json_get: "{\"url\":\"https://api.github.com/users/octocat\",\"method\":\"GET\",\"headers\":{\"User-Agent\":\"HAWK-Workflow/1.0\"}}"
+
+string result_json_get
+string error_get
+
+mcp_call: {
+    server: server,
+    tool: tool,
+    args_json: args_json_get,
+    result: result_json_get,
+    error: error_get
+}
+
+# 让 LLM 提取并总结 GET 请求结果
+string prompt_get: "以下是调用 GitHub API 的结果（CallToolResult JSON 格式）。请提取其中的关键字段（status_code, ok, text），并用一句话总结 API 返回的用户信息。"
+
+string summary_get
+
+llm_agent: {
+    context: result_json_get,
+    prompt: prompt_get,
+    response: summary_get
+}
+
+# ============================================
+# 示例 2: GET 请求带查询参数
+# ============================================
+
+# 请求 JSONPlaceholder API（带查询参数）
+string args_json_params: "{\"url\":\"https://jsonplaceholder.typicode.com/posts\",\"method\":\"GET\",\"params\":{\"userId\":\"1\"},\"max_response_chars\":2000}"
+
+string result_json_params
+string error_params
+
+mcp_call: {
+    server: server,
+    tool: tool,
+    args_json: args_json_params,
+    result: result_json_params,
+    error: error_params
+}
+
+# 让 LLM 提取结果
+string prompt_params: "以下是查询 userId=1 的帖子列表的结果（CallToolResult JSON）。请从 text 字段中提取帖子数量和第一篇帖子的标题。"
+
+string summary_params
+
+llm_agent: {
+    context: result_json_params,
+    prompt: prompt_params,
+    response: summary_params
+}
+
+
+# ============================================
+# 示例 3: POST 请求（JSON 数据）
+# ============================================
+
+# 创建新帖子（POST JSON）
+string args_json_post: "{\"url\":\"https://jsonplaceholder.typicode.com/posts\",\"method\":\"POST\",\"body_json\":{\"title\":\"HAWK Test Post\",\"body\":\"This is a test post from HAWK workflow\",\"userId\":1},\"timeout_seconds\":30}"
+
+string result_json_post
+string error_post
+
+mcp_call: {
+    server: server,
+    tool: tool,
+    args_json: args_json_post,
+    result: result_json_post,
+    error: error_post
+}
+
+# 让 LLM 提取 POST 结果
+string prompt_post: "以下是 POST 创建帖子的结果（CallToolResult JSON）。请提取 status_code 和新创建的帖子 ID（从 text 字段的 JSON 中）。"
+
+string summary_post
+
+llm_agent: {
+    context: result_json_post,
+    prompt: prompt_post,
+    response: summary_post
+}
+
+
+# ============================================
+# 示例 4: 错误处理（404）
+# ============================================
+
+# 请求一个不存在的 URL
+string args_json_404: "{\"url\":\"https://jsonplaceholder.typicode.com/posts/99999999\",\"method\":\"GET\"}"
+
+string result_json_404
+string error_404
+
+mcp_call: {
+    server: server,
+    tool: tool,
+    args_json: args_json_404,
+    result: result_json_404,
+    error: error_404
+}
+
+# 让 LLM 分析错误
+string prompt_404: "以下是请求不存在资源的结果（CallToolResult JSON）。请从中提取 status_code、ok 字段，并解释这个错误。"
+
+string summary_404
+
+llm_agent: {
+    context: result_json_404,
+    prompt: prompt_404,
+    response: summary_404
+}
+
+
+__end__
+

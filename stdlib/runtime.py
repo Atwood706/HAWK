@@ -17,6 +17,7 @@ from stdlib.tools.web_fetch import WebFetchTool
 from stdlib.tools.file_io import FileReadTool, FileWriteTool
 from stdlib.tools.web_automation import SVGRenderTool, DrawIORenderTool
 from stdlib.tools.pubmed_search import PubMedSearchTool
+from stdlib.tools.mcp_call import MCPCallTool
 
 
 class _FallbackAgent:
@@ -60,6 +61,7 @@ _TOOL_FACTORIES: Dict[str, Callable[[Optional[Dict[str, Any]]], Any]] = {
     "text_concat": _TextConcatTool.create,
     "render_svg": SVGRenderTool.create,
     "render_drawio": DrawIORenderTool.create,  # 向后兼容别名
+    "mcp_call": MCPCallTool.create,
 }
 
 _AGENT_SINGLETONS: Dict[str, Any] = {}

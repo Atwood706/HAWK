@@ -250,6 +250,21 @@ class BuiltinRegistry:
                 PortDefinition(name="error", description="Error message if failed"),
             ],
         ))
+
+        self.register(BuiltinDefinition(
+            name="mcp_call",
+            category=ElementCategory.TOOL,
+            description="Call an external MCP server tool via stdio (args/result as JSON strings)",
+            inputs=[
+                PortDefinition(name="server", description="MCP server spec, e.g. stdio:<cmd...>", required=True),
+                PortDefinition(name="tool", description="MCP tool name to call", required=True),
+                PortDefinition(name="args_json", description="JSON string of tool arguments", required=False, default="{}"),
+            ],
+            outputs=[
+                PortDefinition(name="result", description="CallToolResult JSON string"),
+                PortDefinition(name="error", description="Error message if failed", required=False),
+            ],
+        ))
     
     def register(self, definition: BuiltinDefinition) -> None:
         """Register a built-in definition."""

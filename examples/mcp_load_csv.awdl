@@ -1,0 +1,23 @@
+import hawk.tools.file_io
+import hawk.tools.web_fetch
+
+__start__
+
+string server: "stdio:python D:\\桌面\\HAWK\\external\\mcp-server-data-exploration\\src\\mcp_server_ds\\server.py"
+string tool: "load_csv"
+string args_json: "{\"csv_path\":\"examples/sample.csv\"}"
+
+string result_json
+string error
+
+mcp_call: {
+    server: server,
+    tool: tool,
+    args_json: args_json,
+    result: result_json,
+    error: error
+}
+
+__end__
+
+
