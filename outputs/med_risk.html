@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ECharts Visualization</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: white;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+        #main {
+            width: 1200px;
+            height: 800px;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+</head>
+<body>
+    <div id="main"></div>
+    <script>
+        // Global state for rendering completion
+        window.chartRendered = false;
+        window.chartError = null;
+        
+        try {
+            // Wait for ECharts to load
+            if (typeof echarts === 'undefined') {
+                window.chartError = 'ECharts library not loaded';
+                throw new Error(window.chartError);
+            }
+            
+            // Initialize chart
+            var chartDom = document.getElementById('main');
+            var myChart = echarts.init(chartDom);
+            var option = {"title": {"text": "Medication Risk Scores", "left": "center", "textStyle": {"fontSize": 18, "color": "#333"}}, "tooltip": {"trigger": "axis", "axisPointer": {"type": "shadow"}}, "xAxis": {"type": "category", "data": ["metformin 500mg bid", "lisinopril 10mg qd", "diclofenac 75 mg bid"], "axisLabel": {"rotate": 30, "interval": 0, "color": "#333"}}, "yAxis": {"type": "value", "min": 0, "max": 10, "name": "Risk Score", "nameTextStyle": {"color": "#333"}, "axisLabel": {"color": "#333"}}, "series": [{"type": "bar", "data": [{"value": 2, "itemStyle": {"color": "#67C23A"}}, {"value": 3, "itemStyle": {"color": "#67C23A"}}, {"value": 7, "itemStyle": {"color": "#F56C6C"}}], "label": {"show": true, "position": "top", "color": "#333"}}], "backgroundColor": "#ffffff", "grid": {"left": "10%", "right": "10%", "bottom": "20%", "top": "15%", "containLabel": true}};
+            
+            // Set option and wait for rendering completion
+            myChart.setOption(option);
+            
+            // Listen to 'finished' event (ECharts 5+)
+            myChart.on('finished', function() {
+                window.chartRendered = true;
+            });
+            
+            // Fallback: assume rendered after a short delay if no 'finished' event
+            setTimeout(function() {
+                if (!window.chartRendered) {
+                    window.chartRendered = true;
+                }
+            }, 1000);
+            
+        } catch (error) {
+            window.chartError = error.message || String(error);
+            console.error('ECharts rendering error:', error);
+        }
+    </script>
+</body>
+</html>

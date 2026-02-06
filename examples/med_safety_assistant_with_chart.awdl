@@ -1,0 +1,214 @@
+import stdlib.agents.llm
+import stdlib.tools.pubmed_search
+import stdlib.tools.file_io
+import stdlib.tools.echarts_render
+
+__start__
+
+# ===== 输入（运行时用 --input 覆盖默认值）=====
+string patient_case: "Adult, 55y. Hypertension + type 2 diabetes. On metformin. Planned iodinated contrast CT. Renal function unknown."
+
+string med_list: "metformin 500mg bid; lisinopril 10mg qd; diclofenac 75 mg bid"
+
+string focus_question: "Check drug-drug interactions, contraindications/cautions, renal/hepatic considerations, monitoring, and patient counseling."
+
+# ===== 工具检索相关 =====
+string pubmed_query
+string pubmed_results
+list pubmed_pmids
+string pubmed_error
+
+# ===== 多 Agent 输出 =====
+string intake_json
+string evidence_pack
+string safety_review
+string clinician_report
+string patient_note
+string patient_rewrite_prompt: "Rewrite for patient"
+
+# ===== 风险图相关 =====
+string risk_scores_json
+string option_json
+string chart_path: "outputs/med_risk.png"
+string chart_success
+string chart_error
+int chart_width: 1000
+int chart_height: 600
+int chart_timeout: 8000
+string chart_cdn: "https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"
+string chart_local: ""
+
+# ===== 拼接辅助（当前语言不支持 '+'，用 text_concat tool 组合）=====
+string prefix_intake: "Intake:\n"
+string prefix_evidence: "\n\nEvidence:\n"
+string prefix_safety: "\n\nSafety:\n"
+string prefix_chart: "\n\n## Risk Assessment Chart\n\n![Medication Risk Scores](med_risk.png)\n\n"
+string ctx_step_1
+string ctx_step_2
+string ctx_all
+string report_with_chart
+
+# ===== 写文件 =====
+string report_path: "outputs/med_safety_report_with_chart.md"
+string patient_path: "outputs/patient_note_with_chart.md"
+string write_ok
+
+# ===== system prompts =====
+string sp_intake: "You are a medication reconciliation assistant. Use the medication list provided in context (上下文) as the source of truth for meds. Extract STRICT JSON only with keys: demographics, conditions, meds (each with name/dose/frequency/route if present), allergies, pregnancy_status, renal_function, hepatic_function, missing_info_questions. Output raw JSON only (no Markdown, no code fences)."
+
+string sp_build_query: "You are a medical literature search specialist. Given meds and patient context, output ONE PubMed query string only. Prefer interactions, contraindications, renal injury risk, and high-quality evidence (review OR guideline OR label)."
+
+string sp_evidence: "You are a medication safety pharmacist. Using ONLY the PubMed results text provided, produce an evidence pack in Markdown.\nHard limits: max 8 bullets total, concise sentences only.\nSections:\n1) Key findings (max 5 bullets)\n2) Uncertainties (max 2 bullets)\n3) Questions to ask / tests to obtain next (max 3 bullets)\nCitations rule: every bullet must include PMID and PubMed URL.\nFormatting rules: no code fences.\nEnd with a single line: END_OF_REPORT"
+
+string sp_critic: "You are a safety critic. Identify overconfident statements, missing critical patient info (e.g., kidney function), dangerous advice, and red flags requiring urgent care.\nHard limits: max 10 bullets total.\nOutput Markdown with headings: Risk flags; Missing info; Safer alternative wording.\nFormatting rules: no code fences.\nEnd with a single line: END_OF_REPORT"
+
+string sp_final: "You are the final clinical summarizer. Create a conservative clinician-facing report. Must include: summary, key risks, recommended next steps (tests/questions), monitoring plan, and a clear disclaimer that this is not medical advice."
+
+string sp_patient: "Rewrite the clinician report into a patient-friendly note. Avoid jargon. Include do/don'ts and when to seek urgent care."
+
+string sp_risk_scores: "You are a medication safety expert. Given a medication list, generate a risk assessment for each medication.\n\nOutput STRICT JSON ONLY (no Markdown, no code fences, no explanation). Structure:\n{\n  \"title\": \"Medication Risk Assessment\",\n  \"scores\": [\n    {\"name\": \"med_name\", \"score\": 0.0-10.0, \"reason\": \"one sentence reason\"},\n    ...\n  ]\n}\n\nRules:\n- Score 0.0 = low risk, 10.0 = high risk (decimal number with ONE decimal place, e.g., 2.5, 7.3)\n- Cover ALL medications in the list, keep original order\n- Reason must be ONE sentence, extremely concise\n- Consider: side effects, contraindications, renal/hepatic toxicity, drug interactions, monitoring needs\n- Output ONLY valid JSON, nothing else"
+
+string sp_echarts: "You are an ECharts expert. Generate a bar chart option from risk score data.\n\nCRITICAL RULES:\n1. Output PURE JSON ONLY - NO markdown, NO code fences, NO ```json wrapper, NO explanation\n2. NO JavaScript functions - use ONLY strings, numbers, arrays, objects\n3. For colors: assign ONE color per data item in series[0].data array based on score (decimals like 2.5, 7.3)\n4. Structure each data item as: {\"value\": score_number, \"itemStyle\": {\"color\": \"#RRGGBB\"}, \"label\": {\"show\": true, \"formatter\": \"score_string\"}} where score_string is the score formatted to 1 decimal place (e.g., \"2.0\", \"7.5\")\n5. MUST include risk level legend at bottom using graphic component\n6. Display scores with ONE decimal place (e.g., 2.5, 7.3) on bar tops\n\nRequired JSON structure:\n{\n  \"title\": {\"text\": \"Medication Risk Assessment\", \"left\": \"center\", \"textStyle\": {\"fontSize\": 18, \"color\": \"#333\"}},\n  \"tooltip\": {\"trigger\": \"axis\", \"axisPointer\": {\"type\": \"shadow\"}},\n  \"xAxis\": {\"type\": \"category\", \"data\": [\"med1\", \"med2\", ...], \"axisLabel\": {\"rotate\": 30, \"interval\": 0, \"color\": \"#333\"}},\n  \"yAxis\": {\"type\": \"value\", \"min\": 0, \"max\": 10, \"name\": \"Risk Score\", \"nameTextStyle\": {\"color\": \"#333\"}, \"axisLabel\": {\"color\": \"#333\"}},\n  \"series\": [{\"type\": \"bar\", \"data\": [{\"value\": 2.5, \"itemStyle\": {\"color\": \"#67C23A\"}, \"label\": {\"show\": true, \"position\": \"top\", \"color\": \"#333\", \"formatter\": \"2.5\"}}, {\"value\": 7.3, \"itemStyle\": {\"color\": \"#F56C6C\"}, \"label\": {\"show\": true, \"position\": \"top\", \"color\": \"#333\", \"formatter\": \"7.3\"}}, ...]}],\n  \"backgroundColor\": \"#ffffff\",\n  \"grid\": {\"left\": \"10%\", \"right\": \"10%\", \"bottom\": \"15%\", \"top\": \"15%\", \"containLabel\": true},\n  \"graphic\": [{\"type\": \"group\", \"left\": \"center\", \"bottom\": \"2%\", \"children\": [{\"type\": \"text\", \"style\": {\"text\": \"Risk Levels: \", \"font\": \"bold 14px sans-serif\", \"fill\": \"#333\"}, \"left\": 0, \"top\": 0}, {\"type\": \"rect\", \"shape\": {\"width\": 15, \"height\": 15}, \"style\": {\"fill\": \"#67C23A\"}, \"left\": 90, \"top\": 0}, {\"type\": \"text\", \"style\": {\"text\": \"Low (0-3)\", \"font\": \"12px sans-serif\", \"fill\": \"#666\"}, \"left\": 110, \"top\": 2}, {\"type\": \"rect\", \"shape\": {\"width\": 15, \"height\": 15}, \"style\": {\"fill\": \"#E6A23C\"}, \"left\": 200, \"top\": 0}, {\"type\": \"text\", \"style\": {\"text\": \"Moderate (4-6)\", \"font\": \"12px sans-serif\", \"fill\": \"#666\"}, \"left\": 220, \"top\": 2}, {\"type\": \"rect\", \"shape\": {\"width\": 15, \"height\": 15}, \"style\": {\"fill\": \"#F56C6C\"}, \"left\": 340, \"top\": 0}, {\"type\": \"text\", \"style\": {\"text\": \"High (7-10)\", \"font\": \"12px sans-serif\", \"fill\": \"#666\"}, \"left\": 360, \"top\": 2}]}]\n}\n\nColor rules:\n- Score 0.0-3.0: green #67C23A (Low risk)\n- Score 3.1-6.0: yellow #E6A23C (Moderate risk)\n- Score 6.1-10.0: red #F56C6C (High risk)\n\nOutput ONLY the JSON object, nothing else."
+
+string prompt_risk: "Generate risk scores for the medications"
+string prompt_chart: "Generate ECharts bar chart option"
+
+# ===== 1) Intake =====
+deepseek_agent: {
+    system_prompt: sp_intake,
+    prompt: patient_case,
+    context: med_list,
+    response: intake_json
+}
+
+# ===== 2) Build PubMed query =====
+deepseek_agent: {
+    system_prompt: sp_build_query,
+    prompt: med_list,
+    context: intake_json,
+    response: pubmed_query
+}
+
+# ===== 3) PubMed search (reliable medical retrieval) =====
+pubmed_search: {
+    query: pubmed_query,
+    results: pubmed_results,
+    pmids: pubmed_pmids,
+    error: pubmed_error
+}
+
+# ===== 4) Evidence pack from PubMed hits =====
+deepseek_agent: {
+    system_prompt: sp_evidence,
+    prompt: focus_question,
+    context: pubmed_results,
+    response: evidence_pack
+}
+
+# ===== 5) Safety review =====
+deepseek_agent: {
+    system_prompt: sp_critic,
+    prompt: focus_question,
+    context: evidence_pack,
+    response: safety_review
+}
+
+# ===== 6) Build final context (concat) =====
+text_concat: {
+    left: prefix_intake,
+    right: intake_json,
+    result: ctx_step_1
+}
+
+text_concat: {
+    left: ctx_step_1,
+    right: prefix_evidence,
+    result: ctx_step_2
+}
+
+text_concat: {
+    left: ctx_step_2,
+    right: evidence_pack,
+    result: ctx_step_1
+}
+
+text_concat: {
+    left: ctx_step_1,
+    right: prefix_safety,
+    result: ctx_step_2
+}
+
+text_concat: {
+    left: ctx_step_2,
+    right: safety_review,
+    result: ctx_all
+}
+
+# ===== 7) Final clinician report =====
+deepseek_agent: {
+    system_prompt: sp_final,
+    prompt: focus_question,
+    context: ctx_all,
+    response: clinician_report
+}
+
+# ===== 8) Generate risk scores =====
+deepseek_agent: {
+    system_prompt: sp_risk_scores,
+    prompt: prompt_risk,
+    context: med_list,
+    response: risk_scores_json
+}
+
+# ===== 9) Generate ECharts option =====
+deepseek_agent: {
+    system_prompt: sp_echarts,
+    prompt: prompt_chart,
+    context: risk_scores_json,
+    response: option_json
+}
+
+# ===== 10) Render risk chart =====
+render_echarts: {
+    option_json: option_json,
+    output_path: chart_path,
+    width: chart_width,
+    height: chart_height,
+    echarts_js_url: chart_cdn,
+    echarts_js_path: chart_local,
+    wait_timeout_ms: chart_timeout,
+    success: chart_success,
+    error: chart_error
+}
+
+# ===== 11) Append chart to report =====
+text_concat: {
+    left: clinician_report,
+    right: prefix_chart,
+    result: report_with_chart
+}
+
+# ===== 12) Patient note =====
+deepseek_agent: {
+    system_prompt: sp_patient,
+    prompt: patient_rewrite_prompt,
+    context: report_with_chart,
+    response: patient_note
+}
+
+# ===== 13) Persist outputs =====
+file_write: {
+    path: report_path,
+    content: report_with_chart,
+    success: write_ok
+}
+
+file_write: {
+    path: patient_path,
+    content: patient_note,
+    success: write_ok
+}
+
+__end__
+
+

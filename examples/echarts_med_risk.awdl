@@ -1,0 +1,82 @@
+import stdlib.agents.llm
+import stdlib.tools.echarts_render
+
+__start__
+
+# ===== 输入（运行时用 --input 覆盖默认值）=====
+string med_list: "metformin 500mg bid; lisinopril 10mg qd; diclofenac 75 mg bid"
+string risk_context: ""
+
+# ===== 系统提示词 =====
+# 第一步：生成风险评分数据（严格 JSON）
+string sp_risk_scores: "You are a medication safety expert. Given a medication list, generate a risk assessment for each medication.\n\nOutput STRICT JSON ONLY (no Markdown, no code fences, no explanation). Structure:\n{\n  \"title\": \"Medication Risk Scores\",\n  \"scores\": [\n    {\"name\": \"med_name\", \"score\": 0.0-10.0, \"reason\": \"one sentence reason\"},\n    ...\n  ]\n}\n\nRules:\n- Score 0.0 = low risk, 10.0 = high risk (decimal number with ONE decimal place, e.g., 2.5, 7.3)\n- Cover ALL medications in the list, keep original order\n- Reason must be ONE sentence, extremely concise\n- Consider: side effects, contraindications, renal/hepatic toxicity, drug interactions, monitoring needs\n- Output ONLY valid JSON, nothing else"
+
+string prompt_risk_scores: "Generate risk scores for the medications"
+
+# 第二步：基于风险数据生成 ECharts option（严格 JSON）
+string sp_echarts_option: "You are an ECharts expert. Generate a bar chart option from risk score data.\n\nCRITICAL RULES:\n1. Output PURE JSON ONLY - NO markdown, NO code fences, NO ```json wrapper, NO explanation\n2. NO JavaScript functions - use ONLY strings, numbers, arrays, objects\n3. For colors: assign ONE color per data item in series[0].data array based on score (decimals like 2.5, 7.3)\n4. Structure each data item as: {\"value\": score_number, \"itemStyle\": {\"color\": \"#RRGGBB\"}, \"label\": {\"show\": true, \"formatter\": \"score_string\"}} where score_string is the score formatted to 1 decimal place (e.g., \"2.0\", \"7.5\")\n5. MUST include risk level legend at bottom using graphic component\n6. Display scores with ONE decimal place (e.g., 2.5, 7.3) on bar tops\n\nRequired JSON structure:\n{\n  \"title\": {\"text\": \"Medication Risk Scores\", \"left\": \"center\", \"textStyle\": {\"fontSize\": 18, \"color\": \"#333\"}},\n  \"tooltip\": {\"trigger\": \"axis\", \"axisPointer\": {\"type\": \"shadow\"}},\n  \"xAxis\": {\"type\": \"category\", \"data\": [\"med1\", \"med2\", ...], \"axisLabel\": {\"rotate\": 30, \"interval\": 0, \"color\": \"#333\"}},\n  \"yAxis\": {\"type\": \"value\", \"min\": 0, \"max\": 10, \"name\": \"Risk Score\", \"nameTextStyle\": {\"color\": \"#333\"}, \"axisLabel\": {\"color\": \"#333\"}},\n  \"series\": [{\"type\": \"bar\", \"data\": [{\"value\": 2.5, \"itemStyle\": {\"color\": \"#67C23A\"}, \"label\": {\"show\": true, \"position\": \"top\", \"color\": \"#333\", \"formatter\": \"2.5\"}}, {\"value\": 7.3, \"itemStyle\": {\"color\": \"#F56C6C\"}, \"label\": {\"show\": true, \"position\": \"top\", \"color\": \"#333\", \"formatter\": \"7.3\"}}, ...]}],\n  \"backgroundColor\": \"#ffffff\",\n  \"grid\": {\"left\": \"10%\", \"right\": \"10%\", \"bottom\": \"15%\", \"top\": \"15%\", \"containLabel\": true},\n  \"graphic\": [{\"type\": \"group\", \"left\": \"center\", \"bottom\": \"2%\", \"children\": [{\"type\": \"text\", \"style\": {\"text\": \"Risk Levels: \", \"font\": \"bold 14px sans-serif\", \"fill\": \"#333\"}, \"left\": 0, \"top\": 0}, {\"type\": \"rect\", \"shape\": {\"width\": 15, \"height\": 15}, \"style\": {\"fill\": \"#67C23A\"}, \"left\": 90, \"top\": 0}, {\"type\": \"text\", \"style\": {\"text\": \"Low (0-3)\", \"font\": \"12px sans-serif\", \"fill\": \"#666\"}, \"left\": 110, \"top\": 2}, {\"type\": \"rect\", \"shape\": {\"width\": 15, \"height\": 15}, \"style\": {\"fill\": \"#E6A23C\"}, \"left\": 200, \"top\": 0}, {\"type\": \"text\", \"style\": {\"text\": \"Moderate (4-6)\", \"font\": \"12px sans-serif\", \"fill\": \"#666\"}, \"left\": 220, \"top\": 2}, {\"type\": \"rect\", \"shape\": {\"width\": 15, \"height\": 15}, \"style\": {\"fill\": \"#F56C6C\"}, \"left\": 340, \"top\": 0}, {\"type\": \"text\", \"style\": {\"text\": \"High (7-10)\", \"font\": \"12px sans-serif\", \"fill\": \"#666\"}, \"left\": 360, \"top\": 2}]}]\n}\n\nColor rules:\n- Score 0.0-3.0: green #67C23A (Low risk)\n- Score 3.1-6.0: yellow #E6A23C (Moderate risk)\n- Score 6.1-10.0: red #F56C6C (High risk)\n\nOutput ONLY the JSON object, nothing else."
+
+string prompt_echarts_option: "Generate ECharts bar chart option based on the risk scores"
+
+# ===== 输出路径与参数 =====
+string output_png: "outputs/med_risk.png"
+string output_html: "outputs/med_risk.html"
+int chart_width: 1200
+int chart_height: 800
+int timeout_ms: 8000
+string echarts_cdn: "https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"
+string echarts_local: ""
+
+# ===== 变量声明 =====
+string risk_scores_json
+string option_json
+string render_success_png
+string render_error_png
+string render_success_html
+string render_error_html
+
+# ===== 1) 生成风险评分数据 =====
+deepseek_agent: {
+    system_prompt: sp_risk_scores,
+    prompt: prompt_risk_scores,
+    context: med_list,
+    response: risk_scores_json
+}
+
+# ===== 2) 生成 ECharts option JSON =====
+deepseek_agent: {
+    system_prompt: sp_echarts_option,
+    prompt: prompt_echarts_option,
+    context: risk_scores_json,
+    response: option_json
+}
+
+# ===== 3) 渲染为 PNG 图片 =====
+render_echarts: {
+    option_json: option_json,
+    output_path: output_png,
+    width: chart_width,
+    height: chart_height,
+    echarts_js_url: echarts_cdn,
+    echarts_js_path: echarts_local,
+    wait_timeout_ms: timeout_ms,
+    success: render_success_png,
+    error: render_error_png
+}
+
+# ===== 4) 同时渲染为 HTML（可在浏览器中交互）=====
+render_echarts: {
+    option_json: option_json,
+    output_path: output_html,
+    width: chart_width,
+    height: chart_height,
+    echarts_js_url: echarts_cdn,
+    echarts_js_path: echarts_local,
+    wait_timeout_ms: timeout_ms,
+    success: render_success_html,
+    error: render_error_html
+}
+
+__end__
+
+
