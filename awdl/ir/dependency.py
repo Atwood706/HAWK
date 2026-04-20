@@ -13,12 +13,12 @@ from dataclasses import dataclass, field
 from typing import Dict, List, Set, Optional, Tuple, Union
 from collections import defaultdict
 
-from awdl.ir.elements import Agent, Tool, Element
+from awdl.ir.elements import Agent, FunctionCall, Tool, Element
 from awdl.ir.conditions import Condition, WhileLoop, ForLoop
 
 
 # Type alias for workflow elements
-WorkflowElement = Union[Agent, Tool, Condition, WhileLoop, ForLoop]
+WorkflowElement = Union[Agent, Tool, FunctionCall, Condition, WhileLoop, ForLoop]
 
 
 @dataclass
@@ -281,4 +281,3 @@ class DependencyAnalyzer:
 
 # Import Workflow at the end to avoid circular imports
 from awdl.ir.workflow import Workflow
-

@@ -14,6 +14,8 @@ class TokenType(Enum):
     
     # Keywords
     IMPORT = auto()
+    PROFILE = auto()
+    FUNCTION = auto()
     IF = auto()
     ELSE = auto()
     WHILE = auto()
@@ -74,6 +76,8 @@ class TokenType(Enum):
 # Mapping of keyword strings to token types
 KEYWORDS: dict[str, TokenType] = {
     "import": TokenType.IMPORT,
+    "profile": TokenType.PROFILE,
+    "function": TokenType.FUNCTION,
     "if": TokenType.IF,
     "else": TokenType.ELSE,
     "while": TokenType.WHILE,

@@ -1,38 +1,33 @@
-import hawk.agents.llm
-import hawk.tools.web_search
-
-__start__
-
-# Variable declarations
-string user_query: "What is the weather today?"
-string search_results
-string final_answer
-
-# Element invocations with I/O bindings
-# Execution order is derived from variable dependencies:
-#   web_search writes search_results
-#   llm_agent reads search_results -> so llm_agent runs AFTER web_search
-
-web_search: {
-    query: user_query,
-    results: search_results
+profile coder {
+    model: "deepseek-chat"
+    max_turns: 4
+    tools: ["web_search", "web_fetch"]
 }
 
-llm_agent: {
-    context: search_results,
-    prompt: user_query,
-    response: final_answer
-}
-
-# Condition element - checks variable value
-if final_answer == "":
-{
-    fallback_agent: {
-        input: user_query,
-        output: final_answer
+function prepare_query(user_query; prepared_query) {
+    text_concat: {
+        left: user_query,
+        right: user_query,
+        result: prepared_query
     }
 }
 
-__end__
+__start__
 
-# awdl run examples\poetry.awdl --trace --input "user_request=请写一首关于冬夜与灯火的现代诗，12行以内"
+string user_query: "What is the weather today?"
+string prepared_query
+string final_answer
+
+prepare_query: {
+    user_query: user_query,
+    prepared_query: prepared_query
+}
+
+agent: {
+    profile: "coder",
+    prompt: user_query,
+    context: prepared_query,
+    response: final_answer
+}
+
+__end__

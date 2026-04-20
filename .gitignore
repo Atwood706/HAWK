@@ -1,0 +1,27 @@
+# Local runtime data
+data/
+workspace/
+skills/
+outputs/
+
+# Local scratch Node dependencies/packages
+node_modules/
+/package.json
+/package-lock.json
+
+# Python caches and test artifacts
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Web build output
+apps/web/node_modules/
+apps/web/dist/
+apps/web/.vite/
+
+# OS/editor files
+.DS_Store

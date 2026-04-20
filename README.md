@@ -23,22 +23,19 @@ playwright install chromium
 Create a workflow file `example.awdl`:
 
 ```awdl
-import hawk.agents.llm
-import hawk.tools.web_search
+profile coder {
+    model: "deepseek-chat"
+    max_turns: 4
+    tools: ["web_search", "web_fetch"]
+}
 
 __start__
 
 string user_query: "What is the weather today?"
-string search_results
 string final_answer
 
-web_search: {
-    query: user_query,
-    results: search_results
-}
-
-llm_agent: {
-    context: search_results,
+agent: {
+    profile: "coder",
     prompt: user_query,
     response: final_answer
 }
@@ -55,11 +52,75 @@ awdl validate examples/test.awdl --verbose
 # 2. 编译成 Python（生成可执行的 LangGraph 代码）
 awdl compile examples/test.awdl --target langgraph -o workflow.py
 
-# 3. 运行工作流（使用 .awdl 文件中的默认值）
+# 3. 运行工作流（使用 profile 中配置的模型和默认输入）
 awdl run examples/test.awdl
 
 # 4. 运行工作流（覆盖默认值，传入自定义输入）
 awdl run examples/test.awdl --input user_query=Hello
+```
+
+## Local Workbench Config
+
+The local web workbench exposes a Config page for workspace-local editing and inspection:
+
+- **Profiles**: list, edit, and save TOML profiles through the backend API
+- **Tools**: inspect the builtin registry from `awdl/ir/builtins.py`
+- **Skills**: browse discovered `SKILL.md` documents from the runtime search paths
+- **Settings**: the app reads backend-managed settings and falls back to defaults when none are stored
+
+Run the web app from `apps/web/` and open the `Config` tab to use these panels.
+
+## Built-In OpenRouter Demo
+
+The local workbench now seeds a runnable demo profile and workflow into backend-managed local storage:
+
+- Built-in profile: `openrouter_chat`
+- Built-in workflow: `openrouter_demo`
+
+Quickest path to a real test run:
+
+```bash
+python scripts/dev_workbench.py
+```
+
+Then in the UI:
+
+1. Open `Config`
+2. Fill `OpenRouter API Key`
+3. Open `Build`
+4. Click `Run`
+5. Open `View` to inspect the saved result, generated AWDL, and trace
+
+The seeded profile uses OpenRouter's OpenAI-compatible endpoint:
+
+- `base_url = "https://openrouter.ai/api/v1"`
+- `model = "openai/gpt-4.1-mini"`
+
+## Local Workbench Startup
+
+From the `HAWK/` repository root (the directory that contains this `README.md`, `apps/`, and
+`scripts/`), start the FastAPI backend and the Vite frontend together with one command:
+
+```bash
+python scripts/dev_workbench.py
+```
+
+This starts:
+
+- FastAPI API server at `http://127.0.0.1:8000`
+- Vite frontend at `http://127.0.0.1:5174`
+
+The frontend dev server proxies `/api/*` requests to FastAPI, so the browser UI can call the backend without changing frontend API URLs.
+
+If you want to run the services separately:
+
+```bash
+# terminal 1
+python -m uvicorn apps.api.main:app --host 127.0.0.1 --port 8000 --reload
+
+# terminal 2
+cd apps/web
+npm run dev -- --host 127.0.0.1 --port 5174
 ```
 
 ## 使用 DeepSeek API（OpenAI 兼容）

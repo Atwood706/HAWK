@@ -10,7 +10,7 @@ from dataclasses import dataclass, field
 from typing import List, Tuple, Dict, Optional, Set
 
 from awdl.ir.workflow import Workflow, WorkflowElement
-from awdl.ir.elements import Agent, Tool
+from awdl.ir.elements import Agent, FunctionCall, Tool
 from awdl.ir.conditions import Condition, WhileLoop, ForLoop
 from awdl.ir.dependency import DependencyAnalyzer, ExecutionOrder
 
@@ -192,7 +192,7 @@ class GraphBuilder:
         node_ids = []
         
         for element in self.workflow.get_all_elements_flat():
-            if isinstance(element, (Agent, Tool)):
+            if isinstance(element, (Agent, Tool, FunctionCall)):
                 node_ids.append(element.element_id)
         
         return node_ids
@@ -210,8 +210,7 @@ class GraphBuilder:
         for element in self.workflow.get_all_elements_flat():
             if isinstance(element, Agent):
                 agent_ids.append(element.element_id)
-            elif isinstance(element, Tool):
+            elif isinstance(element, (Tool, FunctionCall)):
                 tool_ids.append(element.element_id)
         
         return agent_ids, tool_ids
-

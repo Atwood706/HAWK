@@ -1,145 +1,111 @@
 """
-Tests for the AWDL LangGraph Compiler.
+Tests for the rebuilt AWDL LangGraph compiler.
 """
 
-import pytest
-
-from awdl.language.parser import parse_string
 from awdl.compiler.langgraph import LangGraphCompiler
+from awdl.language.parser import parse_string
 
 
-def test_compile_simple_workflow():
-    """Test compiling a simple workflow."""
+def test_compile_workflow_with_unified_agent():
     source = """
+profile coder {
+    model: "test-model"
+    max_turns: 2
+    tools: ["file_read"]
+}
+
 __start__
 
-string user_query: "Hello world"
+string prompt: "Hello world"
 string response
 
-llm_agent: {
-    prompt: user_query,
+agent: {
+    profile: "coder",
+    prompt: prompt,
     response: response
 }
 
 __end__
     """
-    
+
     workflow = parse_string(source)
-    compiler = LangGraphCompiler(workflow)
-    
-    code = compiler.compile()
-    
-    # Check that generated code contains expected elements
+    code = LangGraphCompiler(workflow).compile()
+
     assert "class WorkflowState(TypedDict):" in code
-    assert "user_query: str" in code
-    assert "response: str" in code
     assert "StateGraph(WorkflowState)" in code
-    assert "def llm_agent" in code
+    assert "run_agent(" in code
+    assert '"coder"' in code
 
 
-def test_compile_with_multiple_elements():
-    """Test compiling a workflow with multiple elements."""
+def test_compile_with_subflow_call():
     source = """
-__start__
-
-string query: "test"
-string search_results
-string answer
-
-web_search: {
-    query: query,
-    results: search_results
+profile coder {
+    model: "test-model"
 }
 
-llm_agent: {
-    context: search_results,
-    prompt: query,
-    response: answer
-}
+function prepare_text(input_path; prepared) {
+    string raw
 
-__end__
-    """
-    
-    workflow = parse_string(source)
-    compiler = LangGraphCompiler(workflow)
-    
-    code = compiler.compile()
-    
-    # Check that both nodes are present
-    assert "def web_search" in code
-    assert "def llm_agent" in code
-    
-    # Check that edges are present
-    assert "add_edge" in code
+    file_read: {
+        path: input_path,
+        content: raw
+    }
 
-
-def test_compile_with_condition():
-    """Test compiling a workflow with conditions."""
-    source = """
-__start__
-
-string query: "test"
-string answer: ""
-
-llm_agent: {
-    prompt: query,
-    response: answer
-}
-
-if answer == "":
-{
-    fallback_agent: {
-        input: query,
-        output: answer
+    text_concat: {
+        left: raw,
+        right: raw,
+        result: prepared
     }
 }
 
+__start__
+
+string path: "input.txt"
+string prompt: "test"
+string prepared
+string answer
+
+prepare_text: {
+    input_path: path,
+    prepared: prepared
+}
+
+agent: {
+    profile: "coder",
+    context: prepared,
+    prompt: prompt,
+    response: answer
+}
+
 __end__
     """
-    
+
     workflow = parse_string(source)
-    compiler = LangGraphCompiler(workflow)
-    
-    code = compiler.compile()
-    
-    # Check that condition function is generated
-    assert "def should_condition" in code
+    code = LangGraphCompiler(workflow).compile()
+
+    assert "def prepare_text_impl" in code
+    assert "prepare_text_" in code
+    assert "_node(state: WorkflowState)" in code
+    assert "run_agent(" in code
 
 
-def test_graph_builder():
-    """Test the graph builder."""
+def test_compile_rejects_unknown_profile():
     source = """
 __start__
 
-string a: "input"
-string b
-string c
+string prompt: "Hello world"
+string response
 
-tool1: {
-    input: a,
-    results: b
-}
-
-tool2: {
-    input: b,
-    results: c
+agent: {
+    profile: "missing",
+    prompt: prompt,
+    response: response
 }
 
 __end__
     """
-    
+
     workflow = parse_string(source)
-    compiler = LangGraphCompiler(workflow)
-    
-    # Get edges
-    edges = compiler.graph_builder.build_edges()
-    
-    # Should have one edge from tool1 to tool2
-    assert len(edges) == 1
-    assert edges[0].source.startswith("tool1")
-    assert edges[0].target.startswith("tool2")
+    errors = LangGraphCompiler(workflow).validate()
 
-
-if __name__ == "__main__":
-    pytest.main([__file__, "-v"])
-
+    assert any("Unknown profile" in error for error in errors)
