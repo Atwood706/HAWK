@@ -1,0 +1,173 @@
+import stdlib.tools.pubmed_search
+import stdlib.tools.file_io
+import stdlib.tools.echarts_render
+
+profile medical_deepseek {
+    model: "deepseek-chat"
+    base_url: "https://api.deepseek.com/v1"
+    max_turns: 4
+    temperature: 0.2
+}
+
+__start__
+
+string patient_case: "Adult, 55y. Hypertension + type 2 diabetes. On metformin. Planned iodinated contrast CT. Renal function unknown."
+string med_list: "metformin 500mg bid; lisinopril 10mg qd; diclofenac 75 mg bid"
+string focus_question: "Check drug-drug interactions, contraindications/cautions, renal/hepatic considerations, monitoring, and patient counseling."
+
+string intake_json
+string pubmed_query
+string pubmed_results
+list pubmed_pmids
+string pubmed_error
+string evidence_pack
+string clinician_report
+string patient_note
+string option_json
+
+string ctx_label_patient: "Patient case and medication list:"
+string ctx_label_evidence: "PubMed evidence:"
+string ctx_patient
+string ctx_report_1
+string ctx_report_2
+string ctx_report_3
+
+string chart_path: "outputs/med_risk_new.html"
+string chart_success
+string chart_error
+int chart_width: 1000
+int chart_height: 600
+int chart_timeout: 8000
+string chart_cdn: "https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"
+string chart_local: ""
+
+string chart_markdown: "\n\n## Risk Assessment Chart\n\nOpen the generated chart: outputs/med_risk_new.html\n"
+string report_with_chart
+string report_path: "outputs/med_safety_report_with_chart_new.md"
+string patient_path: "outputs/patient_note_with_chart_new.md"
+string write_report_ok
+string write_report_error
+string write_patient_ok
+string write_patient_error
+
+string sp_intake: "You are a medication reconciliation assistant. Use the patient case and medication list to extract STRICT JSON only with keys: demographics, conditions, meds, allergies, pregnancy_status, renal_function, hepatic_function, missing_info_questions. Output raw JSON only."
+string sp_query: "You are a medical literature search specialist. Given the patient context and meds, output ONE PubMed query string only. Prefer interactions, contraindications, renal injury risk, guideline, label, or review evidence."
+string sp_evidence: "You are a medication safety pharmacist. Using ONLY the PubMed results in context, write a concise evidence pack in Markdown. Include key risks, uncertainties, and next tests/questions. Cite PMID or PubMed URL when present. End with END_OF_REPORT."
+string sp_report: "You are a conservative clinical medication safety summarizer. Create a clinician-facing report with summary, key risks, recommended next steps, monitoring plan, and a clear disclaimer that this is not medical advice."
+string sp_patient: "Rewrite the clinician report into a patient-friendly note. Avoid jargon. Include do/don'ts and when to seek urgent care."
+string prompt_intake: "Extract medication reconciliation JSON."
+string prompt_query: "Build the PubMed query."
+string prompt_evidence: "Summarize the retrieved evidence for medication safety."
+string prompt_report: "Write the clinician-facing medication safety report."
+string prompt_patient: "Rewrite for the patient."
+
+text_concat: {
+    left: patient_case,
+    right: med_list,
+    result: ctx_patient
+}
+
+agent: {
+    profile: "medical_deepseek",
+    system_prompt: sp_intake,
+    prompt: prompt_intake,
+    context: ctx_patient,
+    response: intake_json
+}
+
+agent: {
+    profile: "medical_deepseek",
+    system_prompt: sp_query,
+    prompt: prompt_query,
+    context: ctx_patient,
+    response: pubmed_query
+}
+
+pubmed_search: {
+    query: pubmed_query,
+    results: pubmed_results,
+    pmids: pubmed_pmids,
+    error: pubmed_error
+}
+
+agent: {
+    profile: "medical_deepseek",
+    system_prompt: sp_evidence,
+    prompt: prompt_evidence,
+    context: pubmed_results,
+    response: evidence_pack
+}
+
+text_concat: {
+    left: ctx_label_patient,
+    right: ctx_patient,
+    result: ctx_report_1
+}
+
+text_concat: {
+    left: ctx_report_1,
+    right: ctx_label_evidence,
+    result: ctx_report_2
+}
+
+text_concat: {
+    left: ctx_report_2,
+    right: evidence_pack,
+    result: ctx_report_3
+}
+
+agent: {
+    profile: "medical_deepseek",
+    system_prompt: sp_report,
+    prompt: prompt_report,
+    context: ctx_report_3,
+    response: clinician_report
+}
+
+med_risk_chart_option: {
+    med_list: med_list,
+    patient_context: patient_case,
+    option_json: option_json
+}
+
+render_echarts: {
+    option_json: option_json,
+    output_path: chart_path,
+    width: chart_width,
+    height: chart_height,
+    echarts_js_url: chart_cdn,
+    echarts_js_path: chart_local,
+    wait_timeout_ms: chart_timeout,
+    success: chart_success,
+    error: chart_error
+}
+
+text_concat: {
+    left: clinician_report,
+    right: chart_markdown,
+    result: report_with_chart
+}
+
+agent: {
+    profile: "medical_deepseek",
+    system_prompt: sp_patient,
+    prompt: prompt_patient,
+    context: report_with_chart,
+    response: patient_note
+}
+
+file_write: {
+    path: report_path,
+    content: report_with_chart,
+    success: write_report_ok,
+    error: write_report_error
+}
+
+file_write: {
+    path: patient_path,
+    content: patient_note,
+    success: write_patient_ok,
+    error: write_patient_error
+}
+
+__end__
