@@ -20,7 +20,7 @@ playwright install chromium
 
 ## Quick Start
 
-Create a workflow file `example.awdl`:
+Create a workflow file `test.awdl`:
 
 ```awdl
 profile coder {
@@ -56,7 +56,7 @@ awdl compile examples/test.awdl --target langgraph -o workflow.py
 awdl run examples/test.awdl
 
 # 4. 运行工作流（覆盖默认值，传入自定义输入）
-awdl run examples/test.awdl --input user_query=Hello
+awdl run examples/test.awdl --input user_query="your string"
 ```
 
 ## Local Workbench Config
@@ -129,45 +129,23 @@ npm run dev -- --host 127.0.0.1 --port 5174
 
 在运行前设置环境变量：
 
-- **DEEPSEEK_API_KEY**：你的 DeepSeek Key（必需）
-- **DEEPSEEK_BASE_URL**：默认 `https://api.deepseek.com`（可选）
-- **DEEPSEEK_MODEL**：默认 `deepseek-chat`（可选）
+- **DEEPSEEK_API_KEY**：Your DeepSeek API Key（必需）
+- **DEEPSEEK_BASE_URL**：Default "https://api.deepseek.com"（or "https://api.deepseek.com/v1")
+- **DEEPSEEK_MODEL**：Default `deepseek-chat`（可选）
 
-Windows PowerShell 示例：
-
+Windows PowerShell：
 ```powershell
-$env:DEEPSEEK_API_KEY="你的key"
+$env:DEEPSEEK_API_KEY="your api_key"
 $env:DEEPSEEK_BASE_URL="https://api.deepseek.com"
 $env:DEEPSEEK_MODEL="deepseek-chat"
 ```
-
-然后运行示例：
-
-```bash
-# 诗歌创作（三 Agent 协作）
-awdl run examples/poetry.awdl --trace
-awdl run examples/poetry.awdl --input user_request=请写一首关于冬夜与灯火的现代诗
-
-# 文件总结（读文件 → LLM 总结 → 写文件）
-awdl run examples/file_summarize.awdl --trace
-
-# Draw.io 流程图生成（LLM 生成 XML → 浏览器自动化渲染 → 保存图片）
-awdl run examples/diagram_drawio.awdl --trace
-awdl run examples/diagram_drawio.awdl --input "user_description=画一个登录流程：用户输入→验证身份→成功/失败分支→结束"
+Windows CMD:
+```cmd
+export DEEPSEEK_API_KEY="your api_key"
+export DEEPSEEK_BASE_URL="https://api.deepseek.com"
+export DEEPSEEK_MODEL="deepseek-chat"
 ```
 
-文件读写 + 总结 示例：
-
-```bash
-# 准备 input.txt（示例）
-echo "这是需要总结的内容。" > input.txt
-
-# 运行示例
-awdl run examples/file_summarize.awdl --trace
-
-# 查看输出
-type summary.txt
-```
 
 ## 外部 MCP Server 集成
 
