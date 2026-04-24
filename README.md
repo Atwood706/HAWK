@@ -130,7 +130,7 @@ npm run dev -- --host 127.0.0.1 --port 5174
 在运行前设置环境变量：
 
 - **DEEPSEEK_API_KEY**：Your DeepSeek API Key（必需）
-- **DEEPSEEK_BASE_URL**：Default "https://api.deepseek.com"（or "https://api.deepseek.com/v1")
+- **DEEPSEEK_BASE_URL**：Default `https://api.deepseek.com`（or `https://api.deepseek.com/v1`, 可选)
 - **DEEPSEEK_MODEL**：Default `deepseek-chat`（可选）
 
 Windows PowerShell：
