@@ -139,7 +139,7 @@ $env:DEEPSEEK_API_KEY="your api_key"
 $env:DEEPSEEK_BASE_URL="https://api.deepseek.com"
 $env:DEEPSEEK_MODEL="deepseek-chat"
 ```
-Windows CMD:
+Linux CMD:
 ```cmd
 export DEEPSEEK_API_KEY="your api_key"
 export DEEPSEEK_BASE_URL="https://api.deepseek.com"
