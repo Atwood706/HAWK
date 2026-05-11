@@ -146,6 +146,26 @@ class BuiltinRegistry:
         )
         self.register(
             BuiltinDefinition(
+                name="pubmed_search",
+                category=ElementCategory.TOOL,
+                description="Search PubMed for biomedical literature",
+                inputs=[
+                    PortDefinition(name="query"),
+                    PortDefinition(name="max_results", required=False, default=10),
+                    PortDefinition(name="sort", required=False, default="relevance"),
+                    PortDefinition(name="include_abstracts", required=False, default=False),
+                    PortDefinition(name="mindate", required=False, default=None),
+                    PortDefinition(name="maxdate", required=False, default=None),
+                ],
+                outputs=[
+                    PortDefinition(name="results"),
+                    PortDefinition(name="pmids"),
+                    PortDefinition(name="error", required=False),
+                ],
+            )
+        )
+        self.register(
+            BuiltinDefinition(
                 name="skill_discovery",
                 category=ElementCategory.TOOL,
                 description="List available skills",

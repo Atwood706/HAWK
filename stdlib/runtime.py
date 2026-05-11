@@ -23,6 +23,7 @@ from stdlib.tools.arxiv_search import ArxivSearchTool
 from stdlib.tools.file_io import FileReadTool, FileWriteTool
 from stdlib.tools.mcp_call import MCPCallTool
 from stdlib.tools.web_fetch import WebFetchTool
+from stdlib.tools.pubmed_search import PubMedSearchTool
 from stdlib.tools.web_search import WebSearchTool
 
 
@@ -92,6 +93,7 @@ _TOOL_FACTORIES: Dict[str, Callable[[], Any]] = {
     "text_concat": TextConcatTool,
     "web_search": WebSearchTool,
     "web_fetch": WebFetchTool,
+    "pubmed_search": PubMedSearchTool,
     "mcp_call": MCPCallTool,
     "code_search": CodeSearchTool,
     "shell": ShellTool,
