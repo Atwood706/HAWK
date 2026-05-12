@@ -215,75 +215,9 @@ export DEEPSEEK_MODEL="deepseek-chat"
 > Make sure that the selected `DEEPSEEK_MODEL` is covered by your API key or account permissions.  
 > If your API key does not have access to the specified model type, the workflow may return an empty response or an authorization/model-access error.
 
-## 外部 MCP Server 集成
-
-AWDL 支持通过 `mcp_call` 工具调用外部 MCP (Model Context Protocol) Server，实现功能扩展。
-
-### 1. 数据探索 MCP Server
-
-位置：`external/mcp-server-data-exploration`
-
-功能：加载 CSV、执行 Python 数据分析脚本
-
-示例：
-```bash
-awdl run examples/mcp_load_csv.awdl
-```
-
-### 2. HTTP Request MCP Server ⭐ 新增
-
-位置：`external/mcp-server-http`
-
-功能：通用 HTTP/API 调用工具，支持任意 REST API 的 GET/POST/PUT/PATCH/DELETE 等请求
-
-特性：
-- ✅ 支持所有常见 HTTP 方法
-- ✅ 支持自定义请求头、查询参数、JSON/文本请求体
-- ✅ 支持超时控制、响应截断
-- ✅ 支持 HTTPS，纯 Python 标准库实现
-- ✅ Windows 兼容
-
-安装（可选）：
-```powershell
-pip install -e external/mcp-server-http
-```
-
-示例：
-```bash
-# 简单 GET 请求
-awdl run examples/mcp_http_simple.awdl
-
-# 完整示例（GET/POST/错误处理）
-awdl run examples/mcp_http_request.awdl
-```
-
-在 AWDL 中使用：
-```awdl
-string server: "stdio:python D:\\桌面\\HAWK\\external\\mcp-server-http\\src\\mcp_server_http\\server.py"
-string tool: "http_request"
-string args_json: "{\"url\":\"https://api.example.com/data\",\"method\":\"GET\"}"
-
-string result_json
-string error
-
-mcp_call: {
-    server: server,
-    tool: tool,
-    args_json: args_json,
-    result: result_json,
-    error: error
-}
-```
-
-详细文档：[external/mcp-server-http/README.md](../external/mcp-server-http/README.md)
-
 ## Architecture
 
-AWDL uses a three-layer architecture:
-
-1. **Layer 1 - Parser**: Tokenizes and parses `.awdl` files into an intermediate representation
-2. **Layer 2 - IR**: Framework-agnostic representation of workflows with Agent, Tool, and Condition elements
-3. **Layer 3 - Compiler**: Transforms IR into executable code for target frameworks (e.g., LangGraph)
+AWDL uses a layered architecture:
 
 ## License
 
