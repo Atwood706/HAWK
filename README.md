@@ -162,11 +162,13 @@ $env:DEEPSEEK_API_KEY="your api_key"
 $env:DEEPSEEK_BASE_URL="https://api.deepseek.com"
 $env:DEEPSEEK_MODEL="deepseek-chat"
 ```
+
 Windows CMD：
 ```cmd
 set DEEPSEEK_API_KEY=your api_key
 set DEEPSEEK_BASE_URL=https://api.deepseek.com
 set DEEPSEEK_MODEL=deepseek-chat
+```
 
 Linux CMD:
 ```cmd
