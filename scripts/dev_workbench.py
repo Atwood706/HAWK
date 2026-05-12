@@ -82,6 +82,7 @@ def start_process(spec: ProcessSpec) -> subprocess.Popen[str]:
         stdout=None,
         stderr=None,
         text=True,
+        shell=True,
         **_popen_kwargs(),
     )
 

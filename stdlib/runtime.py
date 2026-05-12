@@ -25,6 +25,7 @@ from stdlib.tools.mcp_call import MCPCallTool
 from stdlib.tools.web_fetch import WebFetchTool
 from stdlib.tools.pubmed_search import PubMedSearchTool
 from stdlib.tools.web_search import WebSearchTool
+from stdlib.tools.echarts_render import EChartsRenderTool
 
 
 class TextConcatTool:
@@ -99,6 +100,8 @@ _TOOL_FACTORIES: Dict[str, Callable[[], Any]] = {
     "shell": ShellTool,
     "skill_discovery": SkillDiscoveryTool,
     "skill_load": SkillLoadTool,
+    "render_echarts": EChartsRenderTool,
+    # "med_risk_chart_option": MedicationRiskChartOptionTool,
 }
 
 
