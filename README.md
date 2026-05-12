@@ -112,8 +112,9 @@ __end__
 ```
 
 
-## Local Workbench Config
+## Local Workbench
 
+### Configuration Panel
 The local web workbench exposes a Config page for workspace-local editing and inspection:
 
 - **Profiles**: list, edit, and save TOML profiles through the backend API
@@ -123,12 +124,14 @@ The local web workbench exposes a Config page for workspace-local editing and in
 
 Run the web app from `apps/web/` and open the `Config` tab to use these panels.
 
-## Built-In OpenRouter Demo
+### Built-In OpenRouter Demo
 
-The local workbench now seeds a runnable demo profile and workflow into backend-managed local storage:
+The local workbench seeds a runnable demo profile and workflow into backend-managed local storage:
 
-- Built-in profile: `openrouter_chat`
-- Built-in workflow: `openrouter_demo`
+- **Built-in profile**: `openrouter_chat` - Pre-configured OpenRouter connection
+- **Built-in workflow**: `openrouter_demo` - Example workflow demonstrating LLM integration
+
+**Setup** (one time):
 
 ```bash
 # Check Node.js and npm versions
@@ -136,58 +139,46 @@ node -v
 npm -v
 
 # Install web app dependencies
-cd web/app
+cd apps/web
 npm install
-```
 
-Run a test:
-
-```bash
-python scripts/dev_workbench.py
-```
-
-Then in the UI:
-
-1. Open `Config`
-2. Fill `OpenRouter API Key`
-3. Open `Build`
-4. Click `Run`
-5. Open `View` to inspect the saved result, generated AWDL, and trace
+Run the demo:
+- Start the workbench (see [Workbench Startup](#workbench-startup))
+- Open the UI at http://127.0.0.1:5174
+- Go to Config tab and fill your OpenRouter API Key
+- Open Build tab and click Run
+- Open View tab to inspect the saved result, generated AWDL, and execution trace
 
 The seeded profile uses OpenRouter's OpenAI-compatible endpoint:
+```
+base_url = "https://openrouter.ai/api/v1"
+model = "openai/gpt-4.1-mini"
+```
 
-- `base_url = "https://openrouter.ai/api/v1"`
-- `model = "openai/gpt-4.1-mini"`
-
-## Local Workbench Startup
-
-From the `HAWK/` repository root (the directory that contains this `README.md`, `apps/`, and
-`scripts/`), start the FastAPI backend and the Vite frontend together with one command:
+### Workbench Startup
+From the HAWK repository root, start the FastAPI backend and Vite frontend together with one command:
 
 ```bash
 python scripts/dev_workbench.py
 ```
-
 This starts:
+FastAPI API server at `http://127.0.0.1:8000`
+Vite frontend at `http://127.0.0.1:5174`
 
-- FastAPI API server at `http://127.0.0.1:8000`
-- Vite frontend at `http://127.0.0.1:5174`
+The frontend dev server proxies /api/* requests to FastAPI, so the browser UI can call the backend without changing frontend API URLs.
 
-The frontend dev server proxies `/api/*` requests to FastAPI, so the browser UI can call the backend without changing frontend API URLs.
-
-If you want to run the services separately:
-
+Running services separately (alternative):
 ```bash
-# terminal 1
+# Terminal 1: Backend only
 python -m uvicorn apps.api.main:app --host 127.0.0.1 --port 8000 --reload
 
-# terminal 2
+# Terminal 2: Frontend only
 cd apps/web
 npm run dev -- --host 127.0.0.1 --port 5174
 ```
+Note: The dev_workbench.py script handles both services automatically and is the recommended way to run the workbench.
 
 ## DeepSeek API Configuration
-
 This project uses `langchain-openai` to call DeepSeek models via an OpenAI-compatible API.
 
 Set environment variables：
