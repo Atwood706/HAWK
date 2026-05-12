@@ -14,9 +14,18 @@ AWDL is a domain-specific language for defining agent workflows in a simple, dec
 ```bash
 pip install -e .
 
-# 如果需要使用 draw.io 图表自动生成功能，还需安装浏览器驱动
+# Dependency for rendering
 playwright install chromium
 ```
+
+## API Configuration
+Deepseek as an example:
+- **DEEPSEEK_API_KEY**：Your DeepSeek API Key (NECESSARY)
+- **DEEPSEEK_BASE_URL**：`https://api.deepseek.com`（or `https://api.deepseek.com/v1`, OpenAI compatible)
+- **DEEPSEEK_MODEL**：`deepseek-chat` (Default)
+
+See [DeepSeek API Configuration](#deepseek-api-configuration) for details.
+
 
 ## Quick Start
 
@@ -46,18 +55,22 @@ __end__
 Compile and run:
 
 ```bash
-# 1. 验证工作流（检查语法和依赖）
+# 1. Validate the workflow (Check syntax and dependencies)
 awdl validate examples/test.awdl --verbose
 
-# 2. 编译成 Python（生成可执行的 LangGraph 代码）
+# 2. Compile the workflow (Compile the .awdl workflow into an executable LangGraph script)
 awdl compile examples/test.awdl --target langgraph -o workflow.py
 
-# 3. 运行工作流（使用 profile 中配置的模型和默认输入）
+# 3. Run the workflow (Use the model and default input defined in the profile)
 awdl run examples/test.awdl
 
-# 4. 运行工作流（覆盖默认值，传入自定义输入）
+# 4. Run with custom input（Override the default input by passing a custom value）
 awdl run examples/test.awdl --input user_query="your string"
 ```
+
+## Guideline for Customizing .awdl
+
+
 
 ## Local Workbench Config
 
@@ -77,7 +90,17 @@ The local workbench now seeds a runnable demo profile and workflow into backend-
 - Built-in profile: `openrouter_chat`
 - Built-in workflow: `openrouter_demo`
 
-Quickest path to a real test run:
+```bash
+# Check Node.js and npm versions
+node -v
+npm -v
+
+# Install web app dependencies
+cd web/app
+npm install
+```
+
+Run a test:
 
 ```bash
 python scripts/dev_workbench.py
@@ -123,7 +146,7 @@ cd apps/web
 npm run dev -- --host 127.0.0.1 --port 5174
 ```
 
-## 使用 DeepSeek API（OpenAI 兼容）
+## DeepSeek API Configuration（OpenAI 兼容）
 
 本项目通过 `langchain-openai` 以 OpenAI 兼容方式调用 DeepSeek。
 
@@ -139,13 +162,24 @@ $env:DEEPSEEK_API_KEY="your api_key"
 $env:DEEPSEEK_BASE_URL="https://api.deepseek.com"
 $env:DEEPSEEK_MODEL="deepseek-chat"
 ```
+Windows CMD：
+```cmd
+set DEEPSEEK_API_KEY=your api_key
+set DEEPSEEK_BASE_URL=https://api.deepseek.com
+set DEEPSEEK_MODEL=deepseek-chat
+
 Linux CMD:
 ```cmd
 export DEEPSEEK_API_KEY="your api_key"
 export DEEPSEEK_BASE_URL="https://api.deepseek.com"
 export DEEPSEEK_MODEL="deepseek-chat"
 ```
-
+> [!WARNING]
+> Make sure your `DEEPSEEK_API_KEY` is valid before running the demo.  
+> If the API key is invalid, expired, or missing, the model response may be empty or the request may fail.
+>
+> Make sure that the selected `DEEPSEEK_MODEL` is covered by your API key or account permissions.  
+> If your API key does not have access to the specified model type, the workflow may return an empty response or an authorization/model-access error.
 
 ## 外部 MCP Server 集成
 
