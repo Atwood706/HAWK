@@ -19,9 +19,9 @@ playwright install chromium
 ```
 
 ## API Configuration
-Deepseek as an example:
+DeepSeek as an example:
 - **DEEPSEEK_API_KEY**：Your DeepSeek API Key (NECESSARY)
-- **DEEPSEEK_BASE_URL**：`https://api.deepseek.com`（or `https://api.deepseek.com/v1`, OpenAI compatible)
+- **DEEPSEEK_BASE_URL**：`https://api.deepseek.com`(or `https://api.deepseek.com/v1`, OpenAI compatible)
 - **DEEPSEEK_MODEL**：`deepseek-chat` (Default)
 
 See [DeepSeek API Configuration](#deepseek-api-configuration) for details.
@@ -146,15 +146,15 @@ cd apps/web
 npm run dev -- --host 127.0.0.1 --port 5174
 ```
 
-## DeepSeek API Configuration（OpenAI 兼容）
+## DeepSeek API Configuration
 
-本项目通过 `langchain-openai` 以 OpenAI 兼容方式调用 DeepSeek。
+This project uses `langchain-openai` to call DeepSeek models via an OpenAI-compatible API.
 
-在运行前设置环境变量：
+Set environment variables：
 
-- **DEEPSEEK_API_KEY**：Your DeepSeek API Key（必需）
-- **DEEPSEEK_BASE_URL**：Default `https://api.deepseek.com`（or `https://api.deepseek.com/v1`, 可选)
-- **DEEPSEEK_MODEL**：Default `deepseek-chat`（可选）
+- **DEEPSEEK_API_KEY**：Your DeepSeek API Key (NECESSARY)
+- **DEEPSEEK_BASE_URL**：Default `https://api.deepseek.com`(or `https://api.deepseek.com/v1`, OpenAI compatible)
+- **DEEPSEEK_MODEL**：`deepseek-chat` (Default)
 
 Windows PowerShell：
 ```powershell
@@ -175,7 +175,7 @@ export DEEPSEEK_BASE_URL="https://api.deepseek.com"
 export DEEPSEEK_MODEL="deepseek-chat"
 ```
 > [!WARNING]
-> Make sure your `DEEPSEEK_API_KEY` is valid before running the demo.  
+> Make sure your `DEEPSEEK_API_KEY` (sk-xxx) is valid before running the demo.  
 > If the API key is invalid, expired, or missing, the model response may be empty or the request may fail.
 >
 > Make sure that the selected `DEEPSEEK_MODEL` is covered by your API key or account permissions.  
