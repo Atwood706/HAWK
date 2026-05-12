@@ -141,6 +141,7 @@ npm -v
 # Install web app dependencies
 cd apps/web
 npm install
+```
 
 Run the demo:
 - Start the workbench (see [Workbench Startup](#workbench-startup))
@@ -153,7 +154,6 @@ The seeded profile uses OpenRouter's OpenAI-compatible endpoint:
 ```
 base_url = "https://openrouter.ai/api/v1"
 model = "openai/gpt-4.1-mini"
-```
 
 ### Workbench Startup
 From the HAWK repository root, start the FastAPI backend and Vite frontend together with one command:
