@@ -68,8 +68,48 @@ awdl run examples/test.awdl
 awdl run examples/test.awdl --input user_query="your string"
 ```
 
-## Guideline for Customizing .awdl
+## Guideline for Customizing .awdl File
+```
+import stdlib.tools.file_io
 
+profile default_llm {
+    model: "gpt-4o"   # model_name
+    temperature: 0.7  # other possible configurations
+}
+
+__start__
+
+# Strings defined here
+string input_text
+string output_text
+
+# System Prompts
+
+# Procedure
+# for example, LLM processing 
+agent: {
+    profile: "default_llm",
+    system_prompt: "You are a helpful assistant.",
+    prompt: input_text,
+    response: output_text
+}
+
+# for example, tool using
+tool_name: {
+    query: query_name,
+    results: results_name,
+    error: error_name
+}
+
+# Save File
+file_write {
+    path: "output.txt",
+    content: output_text,
+    success: write_status
+}
+
+__end__
+```
 
 
 ## Local Workbench Config
