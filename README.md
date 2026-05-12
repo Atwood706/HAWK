@@ -151,7 +151,6 @@ Run the demo:
 - Open View tab to inspect the saved result, generated AWDL, and execution trace
 
 The seeded profile uses OpenRouter's OpenAI-compatible endpoint:
-```
 base_url = "https://openrouter.ai/api/v1"
 model = "openai/gpt-4.1-mini"
 
