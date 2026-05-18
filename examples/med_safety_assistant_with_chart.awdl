@@ -1,7 +1,14 @@
-import stdlib.agents.llm
+# import stdlib.agents.llm
 import stdlib.tools.pubmed_search
 import stdlib.tools.file_io
 import stdlib.tools.echarts_render
+
+profile medical_deepseek {
+    model: "deepseek-chat"
+    base_url: "https://api.deepseek.com/v1"
+    max_turns: 4
+    temperature: 0.2
+}
 
 __start__
 
@@ -74,7 +81,8 @@ string prompt_risk: "Generate risk scores for the medications"
 string prompt_chart: "Generate ECharts bar chart option"
 
 # ===== 1) Intake =====
-deepseek_agent: {
+agent: {
+    profile:"medical_deepseek",
     system_prompt: sp_intake,
     prompt: patient_case,
     context: med_list,
@@ -82,7 +90,8 @@ deepseek_agent: {
 }
 
 # ===== 2) Build PubMed query =====
-deepseek_agent: {
+agent: {
+    profile:"medical_deepseek",
     system_prompt: sp_build_query,
     prompt: med_list,
     context: intake_json,
@@ -98,7 +107,8 @@ pubmed_search: {
 }
 
 # ===== 4) Evidence pack from PubMed hits =====
-deepseek_agent: {
+agent: {
+    profile:"medical_deepseek",
     system_prompt: sp_evidence,
     prompt: focus_question,
     context: pubmed_results,
@@ -106,7 +116,8 @@ deepseek_agent: {
 }
 
 # ===== 5) Safety review =====
-deepseek_agent: {
+agent: {
+    profile:"medical_deepseek",
     system_prompt: sp_critic,
     prompt: focus_question,
     context: evidence_pack,
@@ -145,7 +156,8 @@ text_concat: {
 }
 
 # ===== 7) Final clinician report =====
-deepseek_agent: {
+agent: {
+    profile:"medical_deepseek",
     system_prompt: sp_final,
     prompt: focus_question,
     context: ctx_all,
@@ -153,7 +165,8 @@ deepseek_agent: {
 }
 
 # ===== 8) Generate risk scores =====
-deepseek_agent: {
+agent: {
+    profile:"medical_deepseek",
     system_prompt: sp_risk_scores,
     prompt: prompt_risk,
     context: med_list,
@@ -161,7 +174,8 @@ deepseek_agent: {
 }
 
 # ===== 9) Generate ECharts option =====
-deepseek_agent: {
+agent: {
+    profile:"medical_deepseek",
     system_prompt: sp_echarts,
     prompt: prompt_chart,
     context: risk_scores_json,
@@ -189,7 +203,8 @@ text_concat: {
 }
 
 # ===== 12) Patient note =====
-deepseek_agent: {
+agent: {
+    profile:"medical_deepseek",
     system_prompt: sp_patient,
     prompt: patient_rewrite_prompt,
     context: report_with_chart,

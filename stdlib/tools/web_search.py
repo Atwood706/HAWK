@@ -47,7 +47,13 @@ class WebSearchTool:
         Returns:
             Dictionary with 'results' key containing search results
         """
-        max_results = max_results or self.max_results
+        if max_results is not None:
+            try:
+                max_results = int(max_results)
+            except (ValueError, TypeError):
+                max_results = self.max_results
+        else:
+            max_results = self.max_results
 
         try:
             html_text = self._fetch_html(query)

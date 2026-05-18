@@ -47,6 +47,27 @@ class BuiltinRegistry:
     def _register_defaults(self) -> None:
         self.register(
             BuiltinDefinition(
+                name="render_echarts",
+                category=ElementCategory.TOOL,
+                description="Render an ECharts option JSON to an HTML or image file",
+                inputs=[
+                    PortDefinition(name="option_json"),
+                    PortDefinition(name="output_path"),
+                    PortDefinition(name="width", required=False, default=1200, port_type="int"),
+                    PortDefinition(name="height", required=False, default=800, port_type="int"),
+                    PortDefinition(name="echarts_js_url", required=False, default="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"),
+                    PortDefinition(name="echarts_js_path", required=False, default=""),
+                    PortDefinition(name="wait_timeout_ms", required=False, default=8000, port_type="int"),
+                ],
+                outputs=[
+                    PortDefinition(name="success", port_type="bool"),
+                    PortDefinition(name="error", required=False),
+                ],
+            )
+        )
+
+        self.register(
+            BuiltinDefinition(
                 name="arxiv_search",
                 category=ElementCategory.TOOL,
                 description="Search arXiv for recent papers",
@@ -141,6 +162,26 @@ class BuiltinRegistry:
                     PortDefinition(name="stdout"),
                     PortDefinition(name="stderr", required=False),
                     PortDefinition(name="exit_code"),
+                ],
+            )
+        )
+        self.register(
+            BuiltinDefinition(
+                name="pubmed_search",
+                category=ElementCategory.TOOL,
+                description="Search PubMed for biomedical literature",
+                inputs=[
+                    PortDefinition(name="query"),
+                    PortDefinition(name="max_results", required=False, default=10),
+                    PortDefinition(name="sort", required=False, default="relevance"),
+                    PortDefinition(name="include_abstracts", required=False, default=False),
+                    PortDefinition(name="mindate", required=False, default=None),
+                    PortDefinition(name="maxdate", required=False, default=None),
+                ],
+                outputs=[
+                    PortDefinition(name="results"),
+                    PortDefinition(name="pmids"),
+                    PortDefinition(name="error", required=False),
                 ],
             )
         )
