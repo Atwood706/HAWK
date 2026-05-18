@@ -32,6 +32,10 @@ def repo_root(script_path: Path | None = None) -> Path:
     return path.resolve().parents[1]
 
 
+def npm_executable() -> str:
+    return "npm.cmd" if os.name == "nt" else "npm"
+
+
 def build_process_specs(script_path: Path | None = None) -> list[ProcessSpec]:
     root = repo_root(script_path)
     return [
@@ -53,7 +57,7 @@ def build_process_specs(script_path: Path | None = None) -> list[ProcessSpec]:
         ProcessSpec(
             name="web",
             cmd=[
-                "npm",
+                npm_executable(),
                 "run",
                 "dev",
                 "--",

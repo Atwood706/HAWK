@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { exportWorkflow, listProfiles, listTools, runWorkflow, saveWorkflow, validateWorkflow } from "../../lib/api";
 import type { BuiltinTool, WorkflowGraph, WorkflowNode, WorkflowNodeData, WorkflowNodeType } from "../../types";
 import { ConfigPanel } from "./ConfigPanel";
+import { MedicalSkillsColumn, type MedicalSkill } from "./MedicalSkillsColumn";
 import { NodePalette } from "./NodePalette";
 import { RunPanel } from "./RunPanel";
 import { WorkflowCanvas } from "./WorkflowCanvas";
@@ -119,6 +120,82 @@ export function BuildPage() {
     }));
     setSelectedNodeId((id) => (id === nodeId ? null : id));
     setStatus("Deleted node.");
+    setStatusTone("neutral");
+  };
+
+  const handleAddMedicalSkillNode = (skill: MedicalSkill) => {
+    const selectedAgent = selectedNodeId
+      ? graph.nodes.find((node) => node.id === selectedNodeId && node.type === "agent")
+      : null;
+    const nextIndex = graph.nodes.filter((node) => node.type === "agent").length + 1;
+    const nextId = selectedAgent?.id ?? `agent_${nextIndex}`;
+    const inputName =
+      selectedAgent?.data.inputs.prompt ??
+      Object.values(selectedAgent?.data.inputs ?? {})[0] ??
+      `medical_skill_${nextIndex}_request`;
+    const outputName = `medical_skill_${nextIndex}_response`;
+    const medicalSkill = {
+      name: skill.name,
+      description: skill.description,
+      category: skill.category,
+      url: skill.url,
+    };
+
+    setGraph((current) => ({
+      ...current,
+      nodes: selectedAgent
+        ? current.nodes.map((node) =>
+            node.id === selectedAgent.id
+              ? {
+                  ...node,
+                  data: {
+                    ...node.data,
+                    label: node.data.label || skill.name,
+                    medical_skill: medicalSkill,
+                    inputs:
+                      Object.keys(node.data.inputs).length > 0
+                        ? node.data.inputs
+                        : { prompt: inputName },
+                    outputs:
+                      Object.keys(node.data.outputs).length > 0
+                        ? node.data.outputs
+                        : { response: outputName },
+                  },
+                }
+              : node,
+          )
+        : [
+            ...current.nodes,
+            {
+              id: nextId,
+              type: "agent",
+              position: {
+                x: 160 + current.nodes.length * 44,
+                y: 150 + current.nodes.length * 32,
+              },
+              data: {
+                label: `Agent: ${skill.name}`,
+                profile: "openrouter_chat",
+                medical_skill: medicalSkill,
+                inputs: { prompt: inputName },
+                outputs: { response: outputName },
+              },
+            },
+          ],
+    }));
+
+    if (!selectedAgent) {
+      setSelectedNodeId(nextId);
+    }
+    setRunInput((current) => ({
+      ...current,
+      [inputName]: `Use this medical skill inside the agent.\n\nSkill: ${skill.name}\nDomain: ${skill.category}\nDescription: ${skill.description}\n\nTask: `,
+    }));
+    setStatus(
+      selectedAgent
+        ? `Attached medical skill "${skill.name}" to the selected agent.`
+        : `Added an agent configured with medical skill "${skill.name}".`,
+    );
     setStatusTone("neutral");
   };
 
@@ -257,6 +334,7 @@ export function BuildPage() {
         runInput={runInput}
         onRunInputChange={setRunInput}
       />
+      <MedicalSkillsColumn onAddSkillNode={handleAddMedicalSkillNode} />
     </section>
   );
 }

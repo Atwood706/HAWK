@@ -15,6 +15,22 @@ from apps.api.workflow_graph import WorkflowGraph
 from stdlib import runtime
 
 
+def _apply_medical_skill_to_agent_inputs(node_inputs: dict[str, Any], medical_skill: dict[str, str] | None) -> dict[str, Any]:
+    if not medical_skill:
+        return node_inputs
+
+    prompt = str(node_inputs.get("prompt", ""))
+    skill_context = "\n".join(
+        [
+            "Use the following OpenClaw medical skill as guidance for this agent task:",
+            f"Skill: {medical_skill.get('name', '')}",
+            f"Domain: {medical_skill.get('category', '')}",
+            f"Description: {medical_skill.get('description', '')}",
+        ]
+    )
+    return {**node_inputs, "prompt": f"{skill_context}\n\nTask:\n{prompt}".strip()}
+
+
 def execute_workflow_graph(
     workflow_id: str,
     run_input: dict[str, Any],
@@ -95,11 +111,13 @@ def execute_workflow_graph(
                     }
                 )
             else:
+                node_inputs = _apply_medical_skill_to_agent_inputs(node_inputs, node.data.medical_skill)
                 trace.append(
                     {
                         "event": "node.started",
                         "node_id": node.id,
                         "profile": profile_name,
+                        "medical_skill": node.data.medical_skill,
                         "inputs": node_inputs,
                     }
                 )

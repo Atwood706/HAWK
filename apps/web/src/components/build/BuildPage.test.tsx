@@ -25,6 +25,10 @@ vi.mock("./NodePalette", () => ({
   NodePalette: () => <div>Node palette</div>,
 }));
 
+vi.mock("./MedicalSkillsColumn", () => ({
+  MedicalSkillsColumn: () => <div>Medical skills</div>,
+}));
+
 function mockApi() {
   return {
     listProfiles: vi.mocked(api.listProfiles),

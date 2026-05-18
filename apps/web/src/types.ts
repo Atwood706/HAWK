@@ -5,6 +5,12 @@ export interface WorkflowNodeData {
   profile?: string;
   tool_name?: string;
   function_name?: string;
+  medical_skill?: {
+    name: string;
+    description: string;
+    category: string;
+    url: string;
+  };
   inputs: Record<string, string>;
   outputs: Record<string, string>;
 }
