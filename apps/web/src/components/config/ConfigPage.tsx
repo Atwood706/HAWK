@@ -15,11 +15,47 @@ function SettingCard({ label, value }: { label: string; value: string }) {
   );
 }
 
+const providerKeyFields = [
+  { key: "openrouter_api_key", provider: "OpenRouter", placeholder: "sk-or-v1-..." },
+  { key: "openai_api_key", provider: "OpenAI", placeholder: "sk-..." },
+  { key: "deepseek_api_key", provider: "DeepSeek", placeholder: "sk-..." },
+  { key: "qwen_api_key", provider: "Qwen / DashScope", placeholder: "sk-..." },
+  { key: "gemini_api_key", provider: "Google Gemini", placeholder: "AIza..." },
+  { key: "anthropic_api_key", provider: "Anthropic / Claude", placeholder: "sk-ant-..." },
+  { key: "xai_api_key", provider: "xAI / Grok", placeholder: "xai-..." },
+  { key: "groq_api_key", provider: "Groq", placeholder: "gsk_..." },
+  { key: "mistral_api_key", provider: "Mistral AI", placeholder: "..." },
+  { key: "perplexity_api_key", provider: "Perplexity", placeholder: "pplx-..." },
+  { key: "moonshot_api_key", provider: "Kimi / Moonshot", placeholder: "sk-..." },
+  { key: "zhipu_api_key", provider: "GLM / Zhipu", placeholder: "..." },
+  { key: "siliconflow_api_key", provider: "SiliconFlow", placeholder: "sk-..." },
+  { key: "together_api_key", provider: "Together AI", placeholder: "..." },
+] as const;
+
+type ProviderKeyField = (typeof providerKeyFields)[number]["key"];
+
 export function ConfigPage() {
   const [settings, setSettings] = useState<AppSettings | null>(null);
   const [draftTheme, setDraftTheme] = useState("light");
   const [draftLastOpenWorkflowId, setDraftLastOpenWorkflowId] = useState("");
-  const [draftOpenRouterApiKey, setDraftOpenRouterApiKey] = useState("");
+  const [draftApiKeys, setDraftApiKeys] = useState<Record<ProviderKeyField, string>>({
+    openrouter_api_key: "",
+    openai_api_key: "",
+    deepseek_api_key: "",
+    qwen_api_key: "",
+    gemini_api_key: "",
+    anthropic_api_key: "",
+    xai_api_key: "",
+    groq_api_key: "",
+    mistral_api_key: "",
+    perplexity_api_key: "",
+    moonshot_api_key: "",
+    zhipu_api_key: "",
+    siliconflow_api_key: "",
+    together_api_key: "",
+  });
+  const [selectedProviderKey, setSelectedProviderKey] =
+    useState<ProviderKeyField>("openrouter_api_key");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState("Loading settings...");
@@ -37,7 +73,22 @@ export function ConfigPage() {
         setSettings(value);
         setDraftTheme(value.theme);
         setDraftLastOpenWorkflowId(value.last_open_workflow_id ?? "");
-        setDraftOpenRouterApiKey(value.openrouter_api_key ?? "");
+        setDraftApiKeys({
+          openrouter_api_key: value.openrouter_api_key ?? "",
+          openai_api_key: value.openai_api_key ?? "",
+          deepseek_api_key: value.deepseek_api_key ?? "",
+          qwen_api_key: value.qwen_api_key ?? "",
+          gemini_api_key: value.gemini_api_key ?? "",
+          anthropic_api_key: value.anthropic_api_key ?? "",
+          xai_api_key: value.xai_api_key ?? "",
+          groq_api_key: value.groq_api_key ?? "",
+          mistral_api_key: value.mistral_api_key ?? "",
+          perplexity_api_key: value.perplexity_api_key ?? "",
+          moonshot_api_key: value.moonshot_api_key ?? "",
+          zhipu_api_key: value.zhipu_api_key ?? "",
+          siliconflow_api_key: value.siliconflow_api_key ?? "",
+          together_api_key: value.together_api_key ?? "",
+        });
         setStatus("Settings loaded.");
         setLoading(false);
       })
@@ -68,11 +119,12 @@ export function ConfigPage() {
     return (
       draftTheme !== settings.theme ||
       draftLastOpenWorkflowId !== (settings.last_open_workflow_id ?? "") ||
-      draftOpenRouterApiKey !== (settings.openrouter_api_key ?? "")
+      providerKeyFields.some(({ key }) => draftApiKeys[key] !== (settings[key] ?? ""))
     );
-  }, [draftLastOpenWorkflowId, draftOpenRouterApiKey, draftTheme, settings]);
+  }, [draftApiKeys, draftLastOpenWorkflowId, draftTheme, settings]);
 
   const isSettingsEditable = !loading && !saving && settings !== null;
+  const selectedProvider = providerKeyFields.find(({ key }) => key === selectedProviderKey) ?? providerKeyFields[0];
 
   const handleSave = async () => {
     const nextSettings: AppSettings = {
@@ -80,7 +132,33 @@ export function ConfigPage() {
       last_open_workflow_id:
         draftLastOpenWorkflowId.trim() === "" ? null : draftLastOpenWorkflowId,
       openrouter_api_key:
-        draftOpenRouterApiKey.trim() === "" ? null : draftOpenRouterApiKey,
+        draftApiKeys.openrouter_api_key.trim() === "" ? null : draftApiKeys.openrouter_api_key,
+      openai_api_key:
+        draftApiKeys.openai_api_key.trim() === "" ? null : draftApiKeys.openai_api_key,
+      deepseek_api_key:
+        draftApiKeys.deepseek_api_key.trim() === "" ? null : draftApiKeys.deepseek_api_key,
+      qwen_api_key:
+        draftApiKeys.qwen_api_key.trim() === "" ? null : draftApiKeys.qwen_api_key,
+      gemini_api_key:
+        draftApiKeys.gemini_api_key.trim() === "" ? null : draftApiKeys.gemini_api_key,
+      anthropic_api_key:
+        draftApiKeys.anthropic_api_key.trim() === "" ? null : draftApiKeys.anthropic_api_key,
+      xai_api_key:
+        draftApiKeys.xai_api_key.trim() === "" ? null : draftApiKeys.xai_api_key,
+      groq_api_key:
+        draftApiKeys.groq_api_key.trim() === "" ? null : draftApiKeys.groq_api_key,
+      mistral_api_key:
+        draftApiKeys.mistral_api_key.trim() === "" ? null : draftApiKeys.mistral_api_key,
+      perplexity_api_key:
+        draftApiKeys.perplexity_api_key.trim() === "" ? null : draftApiKeys.perplexity_api_key,
+      moonshot_api_key:
+        draftApiKeys.moonshot_api_key.trim() === "" ? null : draftApiKeys.moonshot_api_key,
+      zhipu_api_key:
+        draftApiKeys.zhipu_api_key.trim() === "" ? null : draftApiKeys.zhipu_api_key,
+      siliconflow_api_key:
+        draftApiKeys.siliconflow_api_key.trim() === "" ? null : draftApiKeys.siliconflow_api_key,
+      together_api_key:
+        draftApiKeys.together_api_key.trim() === "" ? null : draftApiKeys.together_api_key,
     };
 
     setSaving(true);
@@ -91,7 +169,22 @@ export function ConfigPage() {
       setSettings(savedSettings);
       setDraftTheme(savedSettings.theme);
       setDraftLastOpenWorkflowId(savedSettings.last_open_workflow_id ?? "");
-      setDraftOpenRouterApiKey(savedSettings.openrouter_api_key ?? "");
+      setDraftApiKeys({
+        openrouter_api_key: savedSettings.openrouter_api_key ?? "",
+        openai_api_key: savedSettings.openai_api_key ?? "",
+        deepseek_api_key: savedSettings.deepseek_api_key ?? "",
+        qwen_api_key: savedSettings.qwen_api_key ?? "",
+        gemini_api_key: savedSettings.gemini_api_key ?? "",
+        anthropic_api_key: savedSettings.anthropic_api_key ?? "",
+        xai_api_key: savedSettings.xai_api_key ?? "",
+        groq_api_key: savedSettings.groq_api_key ?? "",
+        mistral_api_key: savedSettings.mistral_api_key ?? "",
+        perplexity_api_key: savedSettings.perplexity_api_key ?? "",
+        moonshot_api_key: savedSettings.moonshot_api_key ?? "",
+        zhipu_api_key: savedSettings.zhipu_api_key ?? "",
+        siliconflow_api_key: savedSettings.siliconflow_api_key ?? "",
+        together_api_key: savedSettings.together_api_key ?? "",
+      });
       setStatus("Settings saved.");
     } catch (caughtError: unknown) {
       setError(
@@ -130,8 +223,12 @@ export function ConfigPage() {
           value={settings?.last_open_workflow_id ?? "None recorded"}
         />
         <SettingCard
-          label="OpenRouter key"
-          value={settings?.openrouter_api_key ? "Configured" : "Missing"}
+          label="AI provider keys"
+          value={
+            settings
+              ? `${providerKeyFields.filter(({ key }) => settings[key]).length}/${providerKeyFields.length} configured`
+              : "Loading..."
+          }
         />
         <SettingCard
           label="Settings source"
@@ -183,13 +280,33 @@ export function ConfigPage() {
           </label>
 
           <label className="config-field">
-            <span className="config-label">OpenRouter API Key</span>
-            <input
-              type="text"
-              placeholder="sk-or-v1-..."
-              value={draftOpenRouterApiKey}
+            <span className="config-label">AI Provider</span>
+            <select
+              value={selectedProviderKey}
               disabled={!isSettingsEditable}
-              onChange={(event) => setDraftOpenRouterApiKey(event.target.value)}
+              onChange={(event) => setSelectedProviderKey(event.target.value as ProviderKeyField)}
+            >
+              {providerKeyFields.map(({ key, provider }) => (
+                <option key={key} value={key}>
+                  {provider}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="config-field">
+            <span className="config-label">API Key</span>
+            <input
+              type="password"
+              placeholder={selectedProvider.placeholder}
+              value={draftApiKeys[selectedProviderKey]}
+              disabled={!isSettingsEditable}
+              onChange={(event) =>
+                setDraftApiKeys((current) => ({
+                  ...current,
+                  [selectedProviderKey]: event.target.value,
+                }))
+              }
             />
           </label>
         </div>

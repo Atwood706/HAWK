@@ -34,11 +34,37 @@ describe("ConfigPage", () => {
       theme: "light",
       last_open_workflow_id: "workflow-a",
       openrouter_api_key: "sk-or-v1-old",
+      openai_api_key: null,
+      deepseek_api_key: null,
+      qwen_api_key: null,
+      gemini_api_key: null,
+      anthropic_api_key: null,
+      xai_api_key: null,
+      groq_api_key: null,
+      mistral_api_key: null,
+      perplexity_api_key: null,
+      moonshot_api_key: null,
+      zhipu_api_key: null,
+      siliconflow_api_key: null,
+      together_api_key: null,
     });
     saveSettings.mockResolvedValue({
       theme: "dark",
       last_open_workflow_id: "workflow-b",
       openrouter_api_key: "sk-or-v1-new",
+      openai_api_key: null,
+      deepseek_api_key: null,
+      qwen_api_key: null,
+      gemini_api_key: null,
+      anthropic_api_key: null,
+      xai_api_key: null,
+      groq_api_key: null,
+      mistral_api_key: null,
+      perplexity_api_key: null,
+      moonshot_api_key: null,
+      zhipu_api_key: null,
+      siliconflow_api_key: null,
+      together_api_key: null,
     });
 
     render(<ConfigPage />);
@@ -50,7 +76,7 @@ describe("ConfigPage", () => {
     fireEvent.change(screen.getByLabelText(/last open workflow id/i), {
       target: { value: "workflow-b" },
     });
-    fireEvent.change(screen.getByLabelText(/openrouter api key/i), {
+    fireEvent.change(screen.getByLabelText(/^api key$/i), {
       target: { value: "sk-or-v1-new" },
     });
     fireEvent.click(screen.getByRole("button", { name: /save settings/i }));
@@ -60,6 +86,19 @@ describe("ConfigPage", () => {
         theme: "dark",
         last_open_workflow_id: "workflow-b",
         openrouter_api_key: "sk-or-v1-new",
+        openai_api_key: null,
+        deepseek_api_key: null,
+        qwen_api_key: null,
+        gemini_api_key: null,
+        anthropic_api_key: null,
+        xai_api_key: null,
+        groq_api_key: null,
+        mistral_api_key: null,
+        perplexity_api_key: null,
+        moonshot_api_key: null,
+        zhipu_api_key: null,
+        siliconflow_api_key: null,
+        together_api_key: null,
       });
     });
 
@@ -74,6 +113,19 @@ describe("ConfigPage", () => {
       theme: "light",
       last_open_workflow_id: null,
       openrouter_api_key: null,
+      openai_api_key: null,
+      deepseek_api_key: null,
+      qwen_api_key: null,
+      gemini_api_key: null,
+      anthropic_api_key: null,
+      xai_api_key: null,
+      groq_api_key: null,
+      mistral_api_key: null,
+      perplexity_api_key: null,
+      moonshot_api_key: null,
+      zhipu_api_key: null,
+      siliconflow_api_key: null,
+      together_api_key: null,
     });
     saveSettings.mockRejectedValue(new Error("invalid settings payload"));
 
@@ -98,7 +150,8 @@ describe("ConfigPage", () => {
     expect(await screen.findByText(/failed to load settings/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/theme/i)).toBeDisabled();
     expect(screen.getByLabelText(/last open workflow id/i)).toBeDisabled();
-    expect(screen.getByLabelText(/openrouter api key/i)).toBeDisabled();
+    expect(screen.getByLabelText(/ai provider/i)).toBeDisabled();
+    expect(screen.getByLabelText(/^api key$/i)).toBeDisabled();
     expect(screen.getByRole("button", { name: /save settings/i })).toBeDisabled();
   });
 });

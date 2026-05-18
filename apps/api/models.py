@@ -9,6 +9,19 @@ class AppSettings(BaseModel):
     theme: Literal["light", "dark", "system"] = "light"
     last_open_workflow_id: str | None = None
     openrouter_api_key: str | None = None
+    openai_api_key: str | None = None
+    deepseek_api_key: str | None = None
+    qwen_api_key: str | None = None
+    gemini_api_key: str | None = None
+    anthropic_api_key: str | None = None
+    xai_api_key: str | None = None
+    groq_api_key: str | None = None
+    mistral_api_key: str | None = None
+    perplexity_api_key: str | None = None
+    moonshot_api_key: str | None = None
+    zhipu_api_key: str | None = None
+    siliconflow_api_key: str | None = None
+    together_api_key: str | None = None
 
 
 class ProfileContent(BaseModel):

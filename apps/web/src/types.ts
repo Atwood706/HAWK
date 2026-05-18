@@ -82,6 +82,19 @@ export interface AppSettings {
   theme: string;
   last_open_workflow_id: string | null;
   openrouter_api_key: string | null;
+  openai_api_key: string | null;
+  deepseek_api_key: string | null;
+  qwen_api_key: string | null;
+  gemini_api_key: string | null;
+  anthropic_api_key: string | null;
+  xai_api_key: string | null;
+  groq_api_key: string | null;
+  mistral_api_key: string | null;
+  perplexity_api_key: string | null;
+  moonshot_api_key: string | null;
+  zhipu_api_key: string | null;
+  siliconflow_api_key: string | null;
+  together_api_key: string | null;
 }
 
 export interface ProfileSummary {
