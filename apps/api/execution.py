@@ -15,6 +15,22 @@ from apps.api.workflow_graph import WorkflowGraph
 from stdlib import runtime
 
 
+def _apply_medical_skill_to_agent_inputs(node_inputs: dict[str, Any], medical_skill: dict[str, str] | None) -> dict[str, Any]:
+    if not medical_skill:
+        return node_inputs
+
+    prompt = str(node_inputs.get("prompt", ""))
+    skill_context = "\n".join(
+        [
+            "Use the following OpenClaw medical skill as guidance for this agent task:",
+            f"Skill: {medical_skill.get('name', '')}",
+            f"Domain: {medical_skill.get('category', '')}",
+            f"Description: {medical_skill.get('description', '')}",
+        ]
+    )
+    return {**node_inputs, "prompt": f"{skill_context}\n\nTask:\n{prompt}".strip()}
+
+
 def execute_workflow_graph(
     workflow_id: str,
     run_input: dict[str, Any],
@@ -42,8 +58,8 @@ def execute_workflow_graph(
         if graph.profiles:
             trace.append({"event": "profiles.merged", "inline_names": list(graph.profiles.keys())})
 
-        _inject_openrouter_api_key(inline_profiles, settings.get("openrouter_api_key"))
-        trace.append({"event": "api_key.injected"})
+        _inject_provider_api_keys(inline_profiles, settings)
+        trace.append({"event": "api_keys.injected"})
 
         variables: dict[str, Any] = {variable.name: variable.value for variable in graph.variables}
         variables.update(run_input)
@@ -95,11 +111,13 @@ def execute_workflow_graph(
                     }
                 )
             else:
+                node_inputs = _apply_medical_skill_to_agent_inputs(node_inputs, node.data.medical_skill)
                 trace.append(
                     {
                         "event": "node.started",
                         "node_id": node.id,
                         "profile": profile_name,
+                        "medical_skill": node.data.medical_skill,
                         "inputs": node_inputs,
                     }
                 )
@@ -157,16 +175,52 @@ def _load_inline_profiles(store: FileStore) -> dict[str, dict[str, Any]]:
     return profiles
 
 
-def _inject_openrouter_api_key(
+def _inject_provider_api_keys(
     profiles: dict[str, dict[str, Any]],
-    openrouter_api_key: str | None,
+    settings: dict[str, Any],
 ) -> None:
-    if not openrouter_api_key:
-        return
+    keys_by_provider = {
+        "openrouter": settings.get("openrouter_api_key"),
+        "openai": settings.get("openai_api_key"),
+        "deepseek": settings.get("deepseek_api_key"),
+        "qwen": settings.get("qwen_api_key"),
+        "gemini": settings.get("gemini_api_key"),
+        "anthropic": settings.get("anthropic_api_key"),
+        "xai": settings.get("xai_api_key"),
+        "groq": settings.get("groq_api_key"),
+        "mistral": settings.get("mistral_api_key"),
+        "perplexity": settings.get("perplexity_api_key"),
+        "moonshot": settings.get("moonshot_api_key"),
+        "zhipu": settings.get("zhipu_api_key"),
+        "siliconflow": settings.get("siliconflow_api_key"),
+        "together": settings.get("together_api_key"),
+    }
+    provider_by_base_url = {
+        "https://openrouter.ai/api/v1": "openrouter",
+        "https://api.openai.com/v1": "openai",
+        "https://api.deepseek.com": "deepseek",
+        "https://dashscope.aliyuncs.com/compatible-mode/v1": "qwen",
+        "https://generativelanguage.googleapis.com/v1beta/openai": "gemini",
+        "https://api.anthropic.com": "anthropic",
+        "https://api.x.ai/v1": "xai",
+        "https://api.groq.com/openai/v1": "groq",
+        "https://api.mistral.ai/v1": "mistral",
+        "https://api.perplexity.ai": "perplexity",
+        "https://api.moonshot.cn/v1": "moonshot",
+        "https://open.bigmodel.cn/api/paas/v4": "zhipu",
+        "https://api.siliconflow.cn/v1": "siliconflow",
+        "https://api.together.xyz/v1": "together",
+    }
 
     for profile in profiles.values():
         if profile.get("api_key"):
             continue
-        base_url = str(profile.get("base_url", "")).rstrip("/")
-        if base_url == "https://openrouter.ai/api/v1":
-            profile["api_key"] = openrouter_api_key
+
+        provider = str(profile.get("provider") or "").strip().lower()
+        if not provider:
+            base_url = str(profile.get("base_url", "")).rstrip("/")
+            provider = provider_by_base_url.get(base_url, "")
+
+        api_key = keys_by_provider.get(provider)
+        if api_key:
+            profile["api_key"] = api_key

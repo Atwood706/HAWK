@@ -12,9 +12,11 @@ class WorkflowVariable(BaseModel):
 
 
 class WorkflowNodeData(BaseModel):
+    label: str | None = None
     profile: str | None = None
     tool_name: str | None = None
     function_name: str | None = None
+    medical_skill: dict[str, str] | None = None
     inputs: dict[str, str] = Field(default_factory=dict)
     outputs: dict[str, str] = Field(default_factory=dict)
 

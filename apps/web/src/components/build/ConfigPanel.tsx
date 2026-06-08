@@ -120,6 +120,12 @@ export function ConfigPanel({
     onUpdateNode(node.id, { ...node.data, ...patch });
   };
 
+  const removeMedicalSkill = () => {
+    if (!node || !onUpdateNode) return;
+    const { medical_skill: _medicalSkill, ...dataWithoutSkill } = node.data;
+    onUpdateNode(node.id, dataWithoutSkill);
+  };
+
   return (
     <aside className="build-panel build-panel--config">
       <div className="build-panel__header build-panel__header--inline">
@@ -183,6 +189,31 @@ export function ConfigPanel({
             ) : (
               <strong>{node?.data.profile ?? "—"}</strong>
             )}
+          </div>
+        )}
+        {node?.type === "agent" && (
+          <div className="config-card">
+            <div className="config-card__inline-header">
+              <span className="config-label">Medical Skill</span>
+              {node.data.medical_skill && canEdit ? (
+                <button
+                  type="button"
+                  className="ghost-button ghost-button--compact"
+                  onClick={removeMedicalSkill}
+                >
+                  Remove
+                </button>
+              ) : null}
+            </div>
+            <strong>{node.data.medical_skill?.name ?? "None"}</strong>
+            {node.data.medical_skill ? (
+              <pre>
+                {[
+                  `category: ${node.data.medical_skill.category}`,
+                  `description: ${node.data.medical_skill.description}`,
+                ].join("\n")}
+              </pre>
+            ) : null}
           </div>
         )}
         {node?.type === "tool" && (

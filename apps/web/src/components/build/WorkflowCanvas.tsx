@@ -27,6 +27,24 @@ const nodeColors: Record<WorkflowNodeType, string> = {
   tool: "#5EA8A7",
 };
 
+function renderNodeLabel(node: WorkflowGraph["nodes"][number]) {
+  return (
+    <div className="flow-node">
+      <span
+        className="flow-node__dot"
+        style={{ backgroundColor: nodeColors[node.type] }}
+      />
+      <div>
+        <strong>{node.data.label ?? node.id}</strong>
+        <span>{node.type}</span>
+        {node.type === "agent" && node.data.medical_skill ? (
+          <span className="flow-node__skill">{node.data.medical_skill.name}</span>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
 export function WorkflowCanvas({
   graph,
   selectedNodeId,
@@ -40,21 +58,10 @@ export function WorkflowCanvas({
         id: node.id,
         position: node.position,
         data: {
-          label: (
-            <div className="flow-node">
-              <span
-                className="flow-node__dot"
-                style={{ backgroundColor: nodeColors[node.type] }}
-              />
-              <div>
-                <strong>{node.data.label ?? node.id}</strong>
-                <span>{node.type}</span>
-              </div>
-            </div>
-          ),
+          label: renderNodeLabel(node),
         },
         style: {
-          width: 180,
+          width: 220,
           borderRadius: 18,
           background: "#ffffff",
           color: "#26251e",
@@ -90,18 +97,7 @@ export function WorkflowCanvas({
       return graph.nodes.map((node) => {
         const existing = currentMap.get(node.id);
         const data = {
-          label: (
-            <div className="flow-node">
-              <span
-                className="flow-node__dot"
-                style={{ backgroundColor: nodeColors[node.type] }}
-              />
-              <div>
-                <strong>{node.data.label ?? node.id}</strong>
-                <span>{node.type}</span>
-              </div>
-            </div>
-          ),
+          label: renderNodeLabel(node),
         };
         if (existing) {
           return { ...existing, data };
@@ -111,7 +107,7 @@ export function WorkflowCanvas({
           position: node.position,
           data,
           style: {
-            width: 180,
+            width: 220,
             borderRadius: 18,
             background: "#ffffff",
             color: "#26251e",
@@ -128,7 +124,7 @@ export function WorkflowCanvas({
       currentNodes.map((node) => ({
         ...node,
         style: {
-          width: 180,
+          width: 220,
           borderRadius: 18,
           background: "#ffffff",
           color: "#26251e",

@@ -17,6 +17,7 @@ except ModuleNotFoundError:  # pragma: no cover
     tomllib = None
 
 from openai import OpenAI
+import httpx
 
 from awdl.ir.builtins import BUILTIN_REGISTRY
 from stdlib.tools.arxiv_search import ArxivSearchTool
@@ -144,20 +145,19 @@ class AgentRuntime:
     tools: Optional[list[str]] = None
 
     def __post_init__(self) -> None:
-        api_key = (
-            self.profile.get("api_key")
-            or os.getenv("OPENAI_API_KEY")
-            or os.getenv("DEEPSEEK_API_KEY")
-        )
+        provider = str(self.profile.get("provider") or "").strip().lower()
+        api_key = self.profile.get("api_key") or _provider_api_key(provider)
         if not api_key:
+            self.client = None
+            self.anthropic_api_key = None
+            return
+
+        self.anthropic_api_key = api_key if provider == "anthropic" else None
+        if provider == "anthropic":
             self.client = None
             return
 
-        base_url = (
-            self.profile.get("base_url")
-            or os.getenv("OPENAI_BASE_URL")
-            or os.getenv("DEEPSEEK_BASE_URL")
-        )
+        base_url = self.profile.get("base_url") or _provider_base_url(provider)
         self.client = OpenAI(api_key=api_key, base_url=base_url)
 
     def execute(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
@@ -195,6 +195,8 @@ class AgentRuntime:
         ]
 
         if self.client is None:
+            if self.anthropic_api_key:
+                return self._execute_anthropic(messages, tool_names, trace)
             trace.append({"event": "agent.error", "reason": "missing_api_key"})
             return {"response": prompt if not context else context, "trace": trace, "error": "missing_api_key"}
 
@@ -272,6 +274,77 @@ class AgentRuntime:
             "error": "max_turns_reached",
         }
 
+    def _execute_anthropic(
+        self,
+        messages: list[dict[str, Any]],
+        tool_names: list[str],
+        trace: list[dict[str, Any]],
+    ) -> Dict[str, Any]:
+        if tool_names:
+            trace.append(
+                {
+                    "event": "agent.warning",
+                    "reason": "anthropic_adapter_does_not_support_tools_yet",
+                    "tool_names": tool_names,
+                }
+            )
+
+        system_content = "\n\n".join(
+            str(message.get("content", ""))
+            for message in messages
+            if message.get("role") == "system"
+        ).strip()
+        anthropic_messages = [
+            {
+                "role": "assistant" if message.get("role") == "assistant" else "user",
+                "content": str(message.get("content", "")),
+            }
+            for message in messages
+            if message.get("role") != "system"
+        ]
+        payload: dict[str, Any] = {
+            "model": self.profile.get("model") or "claude-sonnet-4-5-20250929",
+            "messages": anthropic_messages,
+            "max_tokens": int(self.profile.get("max_tokens", 1024)),
+            "temperature": float(self.profile.get("temperature", 0.2)),
+        }
+        if system_content:
+            payload["system"] = system_content
+
+        base_url = str(self.profile.get("base_url") or _provider_base_url("anthropic") or "https://api.anthropic.com").rstrip("/")
+        trace.append(
+            {
+                "event": "agent.anthropic_request",
+                "model": payload["model"],
+                "message_count": len(anthropic_messages),
+            }
+        )
+        try:
+            response = httpx.post(
+                f"{base_url}/v1/messages",
+                headers={
+                    "x-api-key": str(self.anthropic_api_key),
+                    "anthropic-version": "2023-06-01",
+                    "content-type": "application/json",
+                },
+                json=payload,
+                timeout=30,
+            )
+            response.raise_for_status()
+            data = response.json()
+        except Exception as exc:
+            trace.append({"event": "agent.anthropic_error", "error": str(exc)})
+            return {"response": "", "trace": trace, "error": f"anthropic_error: {exc}"}
+
+        text_parts = [
+            str(block.get("text", ""))
+            for block in data.get("content", [])
+            if isinstance(block, dict) and block.get("type") == "text"
+        ]
+        response_text = "\n".join(part for part in text_parts if part).strip()
+        trace.append({"event": "agent.anthropic_response", "content": response_text})
+        return {"response": response_text, "trace": trace}
+
 
 def run_agent(
     profile_name: str,
@@ -284,6 +357,51 @@ def run_agent(
     profile = load_profile(profile_name, inline_profiles=inline_profiles, workflow_dir=workflow_dir)
     runtime = AgentRuntime(profile, skills=skills, tools=tools)
     return runtime.execute(inputs)
+
+
+def _provider_api_key(provider: str) -> str | None:
+    env_by_provider = {
+        "openrouter": ("OPENROUTER_API_KEY",),
+        "openai": ("OPENAI_API_KEY",),
+        "deepseek": ("DEEPSEEK_API_KEY", "OPENAI_API_KEY"),
+        "qwen": ("QWEN_API_KEY", "DASHSCOPE_API_KEY"),
+        "gemini": ("GEMINI_API_KEY", "GOOGLE_API_KEY"),
+        "anthropic": ("ANTHROPIC_API_KEY",),
+        "xai": ("XAI_API_KEY",),
+        "groq": ("GROQ_API_KEY",),
+        "mistral": ("MISTRAL_API_KEY",),
+        "perplexity": ("PERPLEXITY_API_KEY",),
+        "moonshot": ("MOONSHOT_API_KEY", "KIMI_API_KEY"),
+        "zhipu": ("ZHIPU_API_KEY", "BIGMODEL_API_KEY"),
+        "siliconflow": ("SILICONFLOW_API_KEY",),
+        "together": ("TOGETHER_API_KEY",),
+    }
+    env_names = env_by_provider.get(provider, ("OPENAI_API_KEY", "DEEPSEEK_API_KEY"))
+    for env_name in env_names:
+        value = os.getenv(env_name)
+        if value:
+            return value
+    return None
+
+
+def _provider_base_url(provider: str) -> str | None:
+    base_url_by_provider = {
+        "openrouter": os.getenv("OPENROUTER_BASE_URL") or "https://openrouter.ai/api/v1",
+        "openai": os.getenv("OPENAI_BASE_URL") or "https://api.openai.com/v1",
+        "deepseek": os.getenv("DEEPSEEK_BASE_URL") or "https://api.deepseek.com",
+        "qwen": os.getenv("QWEN_BASE_URL") or "https://dashscope.aliyuncs.com/compatible-mode/v1",
+        "gemini": os.getenv("GEMINI_BASE_URL") or "https://generativelanguage.googleapis.com/v1beta/openai/",
+        "anthropic": os.getenv("ANTHROPIC_BASE_URL") or "https://api.anthropic.com",
+        "xai": os.getenv("XAI_BASE_URL") or "https://api.x.ai/v1",
+        "groq": os.getenv("GROQ_BASE_URL") or "https://api.groq.com/openai/v1",
+        "mistral": os.getenv("MISTRAL_BASE_URL") or "https://api.mistral.ai/v1",
+        "perplexity": os.getenv("PERPLEXITY_BASE_URL") or "https://api.perplexity.ai",
+        "moonshot": os.getenv("MOONSHOT_BASE_URL") or "https://api.moonshot.cn/v1",
+        "zhipu": os.getenv("ZHIPU_BASE_URL") or "https://open.bigmodel.cn/api/paas/v4",
+        "siliconflow": os.getenv("SILICONFLOW_BASE_URL") or "https://api.siliconflow.cn/v1",
+        "together": os.getenv("TOGETHER_BASE_URL") or "https://api.together.xyz/v1",
+    }
+    return base_url_by_provider.get(provider) or os.getenv("OPENAI_BASE_URL") or os.getenv("DEEPSEEK_BASE_URL")
 
 
 def _tool_schema(name: str) -> Dict[str, Any]:

@@ -12,6 +12,7 @@ import { parseToml, serializeToml } from "../../lib/toml";
 import type { ProfileDetail, ProfileSummary } from "../../types";
 
 interface ProfileForm {
+  provider?: string;
   model?: string;
   base_url?: string;
   api_key?: string;
@@ -23,9 +24,118 @@ interface ProfileForm {
   [key: string]: unknown;
 }
 
+const providerPresets = {
+  openrouter: {
+    label: "OpenRouter",
+    model: "openai/gpt-4.1-mini",
+    base_url: "https://openrouter.ai/api/v1",
+  },
+  openai: {
+    label: "OpenAI",
+    model: "gpt-4.1-mini",
+    base_url: "https://api.openai.com/v1",
+  },
+  deepseek: {
+    label: "DeepSeek",
+    model: "deepseek-v4-flash",
+    base_url: "https://api.deepseek.com",
+  },
+  qwen: {
+    label: "Qwen / DashScope",
+    model: "qwen-plus",
+    base_url: "https://dashscope.aliyuncs.com/compatible-mode/v1",
+  },
+  gemini: {
+    label: "Google Gemini",
+    model: "gemini-3-flash-preview",
+    base_url: "https://generativelanguage.googleapis.com/v1beta/openai/",
+  },
+  anthropic: {
+    label: "Anthropic / Claude",
+    model: "claude-sonnet-4-5-20250929",
+    base_url: "https://api.anthropic.com",
+  },
+  xai: {
+    label: "xAI / Grok",
+    model: "grok-4-1-fast-reasoning",
+    base_url: "https://api.x.ai/v1",
+  },
+  groq: {
+    label: "Groq",
+    model: "llama-3.3-70b-versatile",
+    base_url: "https://api.groq.com/openai/v1",
+  },
+  mistral: {
+    label: "Mistral AI",
+    model: "mistral-large-latest",
+    base_url: "https://api.mistral.ai/v1",
+  },
+  perplexity: {
+    label: "Perplexity",
+    model: "sonar-pro",
+    base_url: "https://api.perplexity.ai",
+  },
+  moonshot: {
+    label: "Kimi / Moonshot",
+    model: "kimi-k2-0905-preview",
+    base_url: "https://api.moonshot.cn/v1",
+  },
+  zhipu: {
+    label: "GLM / Zhipu",
+    model: "glm-4-plus",
+    base_url: "https://open.bigmodel.cn/api/paas/v4",
+  },
+  siliconflow: {
+    label: "SiliconFlow",
+    model: "deepseek-ai/DeepSeek-V3.1",
+    base_url: "https://api.siliconflow.cn/v1",
+  },
+  together: {
+    label: "Together AI",
+    model: "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+    base_url: "https://api.together.xyz/v1",
+  },
+  custom: {
+    label: "Custom compatible API",
+    model: "",
+    base_url: "",
+  },
+} as const;
+
+type ProviderPresetKey = keyof typeof providerPresets;
+
+function inferProvider(form: ProfileForm): ProviderPresetKey {
+  const explicitProvider = String(form.provider ?? "").trim();
+  if (explicitProvider in providerPresets) {
+    return explicitProvider as ProviderPresetKey;
+  }
+
+  const baseUrl = String(form.base_url ?? "").replace(/\/+$/, "");
+  const matched = Object.entries(providerPresets).find(([, preset]) => {
+    if (!preset.base_url) return false;
+    return preset.base_url.replace(/\/+$/, "") === baseUrl;
+  });
+  return (matched?.[0] as ProviderPresetKey | undefined) ?? "custom";
+}
+
+function normalizeProfileForm(parsed: ProfileForm): ProfileForm {
+  const merged = {
+    ...makeDefaultForm(),
+    ...parsed,
+    skills: Array.isArray(parsed.skills) ? parsed.skills : [],
+    tools: Array.isArray(parsed.tools) ? parsed.tools : [],
+  };
+  return {
+    ...merged,
+    provider: inferProvider(merged),
+  };
+}
+
 function makeDefaultForm(): ProfileForm {
   return {
-    model: "deepseek-chat",
+    provider: "openrouter",
+    model: providerPresets.openrouter.model,
+    base_url: providerPresets.openrouter.base_url,
     max_turns: 4,
     temperature: 0.2,
     system_prompt: "",
@@ -127,12 +237,7 @@ export function ProfilesPanel() {
           parsed = {};
         }
         setProfileName(profile.name);
-        setForm({
-          ...makeDefaultForm(),
-          ...parsed,
-          skills: Array.isArray(parsed.skills) ? parsed.skills : [],
-          tools: Array.isArray(parsed.tools) ? parsed.tools : [],
-        });
+        setForm(normalizeProfileForm(parsed));
         setSavedSnapshot(profile);
         setStatus(`Loaded profile ${profile.name}.`);
       })
@@ -213,12 +318,7 @@ export function ProfilesPanel() {
       } catch {
         parsed = {};
       }
-      setForm({
-        ...makeDefaultForm(),
-        ...parsed,
-        skills: Array.isArray(parsed.skills) ? parsed.skills : [],
-        tools: Array.isArray(parsed.tools) ? parsed.tools : [],
-      });
+      setForm(normalizeProfileForm(parsed));
       setSavedSnapshot(savedProfile);
       setStatus(`Saved profile ${savedProfile.name}.`);
     } catch (caughtError: unknown) {
@@ -273,6 +373,17 @@ export function ProfilesPanel() {
   ) => {
     hasUserInteractedRef.current = true;
     setForm((current) => ({ ...current, [key]: value }));
+  };
+
+  const handleProviderChange = (provider: ProviderPresetKey) => {
+    hasUserInteractedRef.current = true;
+    const preset = providerPresets[provider];
+    setForm((current) => ({
+      ...current,
+      provider,
+      model: preset.model || current.model || "",
+      base_url: preset.base_url || current.base_url || "",
+    }));
   };
 
   const toggleInArray = (key: "skills" | "tools", value: string) => {
@@ -359,6 +470,20 @@ export function ProfilesPanel() {
           </div>
 
           <div className="config-form-grid">
+            <label className="config-field">
+              <span className="config-label">Provider</span>
+              <select
+                value={(form.provider as ProviderPresetKey | undefined) ?? "custom"}
+                onChange={(e) => handleProviderChange(e.target.value as ProviderPresetKey)}
+              >
+                {Object.entries(providerPresets).map(([key, preset]) => (
+                  <option key={key} value={key}>
+                    {preset.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+
             <label className="config-field">
               <span className="config-label">Model</span>
               <input
